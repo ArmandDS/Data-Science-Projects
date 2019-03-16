@@ -1,0 +1,7 @@
+Archivos en este zip:
+
+1. tarea_preprocesado.ipynb = Jupyter Notebook con el codigo y el análisis de la tarea
+2. tarea_preprocesado.html = html generado desde el notebook 
+3. ejercicio_voluntario.ipynb = Jupyter Notebook con el codigo y análisis del ejercicio voluntario 
+4. ejercicio_voluntario.html = html generado desde el notebook
+Nota: los archivos de los datos y descripciones no fueron incluidos en este zip.

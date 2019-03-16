@@ -1,0 +1,409 @@
+---
+title: "Herramientas de Análisis de Grafos - Practica 1"
+author: "Armando Olivares"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(igraph)
+library(data.table)
+```
+
+Este documento recoge el enunciado de la primera práctica del curso de Herramientas de Análisis de Grafos. El objetivo de esta primera práctica es familiarizarnos con las funciones básicas de análisis de grafos en R, a través del paquete Igraph. Para ello, vamos a utilizar un dataset, "mathoverflow-ints.txt", que contiene las interacciones de entre usuarios de la web MathOverflow con la siguiente información:
+- Answers to questions: interacciones de un usuario a otro mediante contestación a preguntas.
+- Comments to questions: interacciones de un usuario a otro mediante comentarios a preguntas.
+- Comments to answers: interacciones de un usuario a otro mediante comentarios a respuestas.
+
+El fichero contiene cuatro columnas:
+- Origen de la interacción
+- Destino de la interacción
+- Marca de tiempo
+- Tipo de interacción
+
+En esta primera práctica, no vamos a tener en cuenta ni el tipo de enlace ni la marca de tiempo de los mismos.
+
+Aparte del código, se pide, por favor, la explicación de las conclusiones que se pueden sacar a través de los análisis realizados. 
+
+<span style="color:blue">Es obligatorio que estas explicaciones estén en color azul.</span>
+
+La práctica se realizará de manera individual, no os olvidéis de poner vuestro nombre al inicio de este documento y también en el nombre del fichero (Practica1_AlejandroLlorente.Rmd).
+
+# Análisis inicial del grafo
+
+## Carga de datos
+
+```{r}
+
+datos <- fread("../datos_practicas/mathoverflow-ints.txt")
+df <- datos
+colnames(df)<- c("origen", "destino", "ts", "tipo")
+```
+
+```{r}
+head(df)
+```
+
+
+En este apartado, el objetivo es cargar el dataset proporcionado para la práctica, crear el objeto grafo y analizar las métricas generales del mismo:
+
+- Describir los valores que devuelve la función summary sobre el grafo.:
+- Incluir la marca de tiempo y el tipo de enlace en el objeto grafo.
+- Validar que el grafo se ha creado correctamente comparando directamente con la lectura del dataframe.
+- Número de nodos, enlaces y densidad.
+
+```{r}
+# Introducir aquí el código de este apartado
+
+g <- graph.data.frame(df, directed = T)
+```
+
+
+```{r}
+summary(g)
+```
+
+
+<span style="color:blue">
+ El Grafo tiene 24k nodos y 50K vertices, Es un grafo  dirigido DN 
+ <ul>
+<li>El Nodo (v/c) - tiene atributo name tipo carácter </li>
+<li> El enlace (e/n) - tiene atributo ts (timestamp) númerico y tipo de enlace como character </li></ul>
+</span>
+
+
+
+
+<span style="color:blue">Número Nodos:</span>
+```{r}
+
+vcount(g)
+```
+
+<span style="color:blue">Nùmero de Enlaces:</span>
+```{r}
+ecount(g)
+```
+
+
+## Validar sobre data Frame:
+
+```{r}
+ecount(g) == nrow((df))
+
+```
+
+<span style="color:blue">Nùmero de Nodos:</span>
+```{r}
+df <-as.data.frame(df)
+vcount(g)
+length(unique(c(df[,1],df[,2])))
+```
+<span style="color:blue">El grafo se ha creado correctamente, ya que se observa que el número de enlaces es igual al número de filas y el número de nodos es igual al número de valores unicos en las columnas origen-destino del dataframe</span>
+
+
+
+
+```{r}
+dg <- (degree(g))
+```
+
+```{r}
+hist(dg)
+hist(log(dg) )
+
+```
+
+
+
+```{r}
+length(unique(df$destino))
+length(unique(df$origen))
+
+```
+
+
+## Características del grafo
+
+En este apartado, utilizaremos funciones de igraph para comprobar los siguientes aspectos del mismo:
+- ¿Existen bucles en el grafo?
+- ¿Existen enlaces múltiples?
+- Creación de otro objeto grafo que resulte de simplificar el grafo original.
+- ¿Es un grafo conexo? Si no lo es, extraer las componentes conexas y analizar la distribución de tamaños de las componentes resultantes. Es necesario analizarlo teniendo en cuenta la dirección de los enlaces así como analizarlo asumiendo que el grafo fuera no dirigido.
+
+```{r}
+# Introducir aquí el código de este apartado
+any(is.loop(g,eids = E(g)))
+```
+<span style="color:blue">Sí existen bucles en nuestro grafo.</span>
+
+
+```{r}
+any(is.multiple(g))
+```
+<span style="color:blue">se nota que existen multiples enlaces</span>
+
+
+
+## Considerando que el Grafo  es Dirigido:
+```{r}
+gg <- simplify((g), remove.multiple = T,  remove.loops = TRUE)
+any(is.loop(gg,eids = E(gg)))
+any(is.multiple(gg))
+
+```
+<span style="color:blue">ya no tenemos enlaces multiples ni loops en este nuevo grafo</span> 
+
+```{r}
+is_connected(gg)
+```
+<span style="color:blue">No es un grafo conexo, por lo que debemos analizar la distribución de sus componentes:</span>
+
+
+
+
+```{r}
+ccs <- components(gg, mode = c("weak", "strong"))
+ccs$no #104 grupos desconectados
+ccs$csize #en el primer grupo me quedo con 24668 nodos, en el segundo con tres so on...
+head(ccs$membership)
+
+```
+
+## Graficamente la distribucion de grupos
+```{r}
+hist(ccs$membership, ylim = c(0,50))
+```
+
+
+
+
+## Considerando que el Grafo es No Dirigido:
+```{r}
+gg2 <- simplify(as.undirected(g), remove.multiple = T,  remove.loops = TRUE)
+any(is.loop(gg2,eids = E(gg2)))
+any(is.multiple(gg2))
+
+```
+<span style="color:blue">ya no tenemos enlaces multiples ni loops en este nuevo grafo</span> 
+
+```{r}
+is_connected(gg2)
+```
+<span style="color:blue">No es un grafo conexo</span>
+
+
+
+
+```{r}
+ccs <- components(gg2)
+ccs$no #104 grupos desconectados
+ccs$csize #en el primer grupo me quedo con 24668 nodos, en el segundo con tres so on...
+head(ccs$membership)
+
+```
+
+<span style="color:blue">Graficamente la distribucion de grupos es:</span>
+```{r}
+hist(ccs$membership, ylim = c(0,50))
+```
+
+
+
+<span style="color:blue">Se concluye que el grafo No es conexo tanto analizandolo como grafo dirigido (fuerte y debil) como no dirigido, en ambos casos presentan 104 componentes</span>
+
+
+
+
+# Métricas y subgrafos
+
+## Análisis del grado de los nodos
+
+Uno de los aspectos fundamentales a la hora de analizar grafos es estudiar la heterogeneidad de los grados de los nodos involucrados:
+- Visualizar la distribución de grados de los nodos
+- Analizar si la distribución es power-law de manera estadística y visualizarlo en la gráfica
+
+```{r}
+# Introducir aquí el código de este apartado
+d = degree(gg)
+hist(d,  ylim = c(0,500))
+hist(log(d))
+```
+
+
+```{r}
+dg <- (degree(gg))
+plot(density(dg), log="xy")
+```
+
+
+<span style="color:blue">Estudiemos si se sigue una distribución  power-law</span>
+
+```{r}
+fit <- power.law.fit(density(d)$y)
+fit
+```
+
+
+```{r}
+
+# plot and fit the power law distribution
+fit_power_law = function(graph) {
+    # calculate degree
+    d = degree(graph, mode = "all")
+    dd = degree.distribution(graph, mode = "all", cumulative = FALSE)
+    degree = 1:max(d)
+    probability = dd[-1]
+    # delete blank values
+    nonzero.position = which(probability != 0)
+    probability = probability[nonzero.position]
+    degree = degree[nonzero.position]
+    reg = lm(log(probability) ~ log(degree))
+    cozf = coef(reg)
+    power.law.fit = function(x) exp(cozf[[1]] + cozf[[2]] * log(x))
+    alpha = -cozf[[2]]
+    R.square = summary(reg)$r.squared
+    print(paste("Alpha =", round(alpha, 3)))
+    print(paste("R square =", round(R.square, 3)))
+    # plot
+    plot(probability ~ degree, log = "xy", xlab = "Degree (log)", ylab = "Probability (log)", 
+        col = 1, main = "Degree Distribution")
+    curve(power.law.fit, col = "red", add = T, n = length(d))
+}
+
+
+fit_power_law(gg)
+```
+
+
+<span style="color:blue">Se concluye del p-value del test estadístico (KS.p) y del gráfico que la distribución se ajusta a una power-law</span>
+
+
+
+
+## Creación del grafo de la mayor componente conexa
+
+En general, nos encontramos que en las redes, aunque normalmente aparecen diferentes componentes conexas, la mayoría de nodos pertenecen a la misma. El objetivo de esta sección es:
+- Creación de un subgrafo de los nodos involucrados en la mayor componente conexa.
+- Validación de que el subgrafo se ha creado correctamente.
+- Analizar cómo ha cambiado la distribución de grados entre el grafo original y este subgrafo. ¿Qué nodos han disminuido más su grado? ¿A qué crees que puede ser debido?
+
+```{r}
+# Introducir aquí el código de este apartado
+ccs <- clusters(gg)
+imax <- which.max(ccs$csize)
+ggc<- induced_subgraph(gg, vids = which(ccs$membership==imax))
+summary(ggc)
+is_connected(ggc)
+vcount(ggc) ==  max(ccs$csize)
+```
+
+```{r}
+d = degree(ggc)
+hist(d,  ylim = c(0,500), main = "Distribución componente conexa")
+hist(degree(g), ylim = c(0,500),  main = "Distribución grafo original")
+
+```
+
+<span style="color:blue">Del gráfico se observa que los nodos que más han disminuido sus grados son los nodos que tienen en el grafo original muchos enlaces (más de ~4000), como se observa en la distribucion, eso es debido que al simplificar y quedarnos con la componente conexa se ha eliminados enlaces y/o conexiones redundantes en el grafo </span>
+
+
+# Visualización de caminos mínimos 
+
+En el subgrafo creado en el apartado anterior, vamos a calcular:
+- La distancia mínima de todos los nodos al nodo de mayor grado.
+- De todas estas distancias, tomaremos la mayor de ellas.
+- Visualizar este camino mínimo máximo de forma individual.
+- Visualizar este camino mínimo máximo en toda la componente conexa.
+
+```{r}
+# Introducir aquí el código de este apartado
+inodo_max <- which.max(d)
+max(d)
+inodo_max
+dist <- distances(ggc, v = inodo_max, to = V(ggc))
+hist(dist)
+
+any(is.infinite(dist))
+table(dist)
+
+```
+
+<span style="color:blue">El nodo 290 es el nodo con mayor grado= 2758</span>
+
+
+```{r}
+max_dist <- which.max(dist)
+max_dist
+
+```
+<span style="color:blue">El nodo 8235 es el nodo que esta a máxima distancia</span>
+
+
+```{r}
+s <- c(shortest.paths(ggc,8235,v = inodo_max) ) 
+which(s == max(s))
+```
+
+## camino mínimo individual
+```{r}
+sp <- get.shortest.paths(as.undirected(ggc), 8235,to =inodo_max, output = "both" )
+g2 <- induced_subgraph(as.undirected(ggc), vids = unlist(sp$vpath))
+plot(g2)
+```
+
+
+###Camino mínimo en la componente conexa
+
+
+
+```{r}
+
+ecol <- rep('gray', ecount(ggc))
+ecol[unlist(sp$epath)] <- "red"
+
+# Generate edge width variable:
+ew <- rep(10, ecount(ggc))
+ew[unlist(sp$epath)] <- 10
+
+# Generate node color variable:
+vcol <- rep(rgb(0,0,1,0.1), vcount(ggc))
+vcol[unlist(sp$vpath)] <- "red"
+vbor <- rep("NA", vcount(ggc))
+vbor[unlist(sp$vpath)] <- "red"
+vlab <- names(V(ggc))
+g_aux <- ggc
+V(g_aux)$label <- ifelse( strength(g_aux)>1, V(g_aux)$name, NA )
+
+vsize <- (degree(ggc))*0.001
+vsize[unlist(sp$vpath)] <- 10
+
+ll <- layout_with_fr((g_aux), niter = 1000)
+
+plot(g_aux, layout=ll, vertex.color=vcol, vertex.label='' )
+
+
+```
+
+<span style="color:blue">Es un gráfico difícil de leer pero se observa el camino en rojo</span>
+
+
+## Realizamos también un grafo jerarquico para comprobar la distancia y el camino máximo
+```{r}
+plot(as.undirected(g_aux), layout=layout.reingold.tilford, vertex.size=vsize, vertex.label='', edge.width=ew, edge.color=ecol, vertex.color=vcol, edge.arrow.size=0 )
+
+```
+
+
+<span style="color:blue">En este último grafico se observan los 5 saltos o trazos entre los puntos rojos o camino mínimo</span>
+
+
+
+
+
+
+<footer>
+  <p>Powered by: Armand</p>
+</footer>

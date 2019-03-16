@@ -1,0 +1,318 @@
+---
+title: "tarea_ejercicio3"
+author: "Armando Olivares"
+date: "29 de octubre de 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+# Ejericicio 3, Tarea Programación en R
+
+### EL Dataset elegido es el de la competencia que organiza yelp, este dataset viene en formato json por lo que para manejarlo debemos hacer uso de librerias especiales como jsonlite.
+
+## el dataset esta disponible en https://www.yelp.com/dataset/challenge
+
+```{r }
+suppressWarnings(library(tidyr))
+suppressWarnings(library(dplyr))
+suppressWarnings(library(jsonlite))
+suppressWarnings(library(stringr))
+
+```
+
+## Cargamos los Datos
+```{r warning = FALSE}
+bussiness_data <- stream_in(file("yelp_academic_dataset_business.json"))
+
+```
+
+
+Examinamos el Dataset
+```{r}
+head(bussiness_data,1)
+
+```
+
+
+### El dataset tiene varias columnas que son ó  una lista u otro dataset anidado, debemos limpiar un poco para poder manejar los datos
+
+```{r}
+hours<- bussiness_data$hours
+head(hours,1)
+```
+
+
+```{r}
+bussiness_data$hours <- NULL
+hours<- as.data.frame(lapply(hours, function(x){ unnest(x, open)   }))
+bussiness_data <- cbind(bussiness_data, hours)
+
+
+```
+
+### Separamos la columnas atributo para tratarla de manera separada
+```{r }
+attribute <- bussiness_data$attributes
+head(attribute, 1)
+```
+
+### Seleccionamos Algunos Atributos de Interes para incluirlos en el DF 
+
+```{r}
+
+extrae_valores <- function(df, nombre_colum, x) {
+  
+  df[,nombre_colum] <- "Other"
+  nombre_sub <- nombre_colum
+  #print(names(x))
+  for (name in names(x)) {
+    #print(name)
+    df[x[[name]], ][nombre_sub]<- name
+    #print(nombre_colum)
+    
+}
+  df[,-(ncol(df))] <- NULL 
+  df
+}
+  
+music <- attribute$Music
+x <- sapply(music, which)
+musica <- extrae_valores(music, "music", x)
+
+```
+
+
+
+
+
+
+```{r}
+ambiente <- attribute$Ambience
+x <- sapply(ambiente, which)
+ambiente <- extrae_valores(ambiente, "ambiente", x)
+head(ambiente)
+
+```
+```{r}
+good_for <- attribute$`Good For`
+x <- sapply(good_for, which)
+good_for <- extrae_valores(good_for, "good_for", x)
+head(good_for)
+
+```
+
+## Eliminamos algunas columnas de DF ambiente que no serán objeto de análisis, esto para simplificar el ejercicio
+```{r}
+names(attribute)
+attribute[, -c(5,13,14,15,16,18,22)] <- NULL
+head(attribute)
+```
+
+### Lo mismo para el DF bussiness Data
+```{r}
+names(bussiness_data)
+bussiness_data[, c(2,8,9,12,13, 14)] <- NULL
+head(bussiness_data)
+bussiness_data$stars<- as.numeric(bussiness_data$stars)
+```
+
+
+### Unimos los Dfs en uno solo
+```{r}
+bussiness_data <- cbind(bussiness_data, ambiente, attribute, musica, good_for)
+head(bussiness_data)
+```
+
+
+### Revisamos la Columna Categories para seleccionar solo 1 categoría
+
+```{r}
+head(bussiness_data$categories)
+```
+
+Esta columnas contiene un lista de elementos
+
+```{r}
+class(bussiness_data$categories)
+```
+
+```{r}
+categories <- as.data.frame(unlist(bussiness_data$categories))
+categories <- as.data.frame(table(categories))
+categories%>% 
+  arrange(-(Freq))%>%
+  head()
+
+```
+
+### Seleccionamos restaurante por la categoria con mas registros
+
+
+```{r}
+bussiness_data <- filter(bussiness_data, str_detect(bussiness_data$categories, "Restaurant"))
+bussiness_data$categories <- NULL
+dim(bussiness_data)
+```
+## obtenemos el DF de bussiness data de yelp con las columnas desedas
+
+### Ya Obtenido el dataframe vamos a intentar descubrir algunos insights
+
+```{r}
+head(bussiness_data)
+```
+
+
+### Restaurant por Estado
+```{r}
+bussiness_data%>%
+  count(state)%>%
+  arrange(-n)
+
+```
+
+
+
+El estado con mayor cantidad de restaurantes es Arizona con 9427
+
+
+### Estado con restaurantes mejor valorados
+(se tomara en cuenta solo los estados con mas de 100 Restaurantes)
+```{r}
+bussiness_data%>%
+  group_by(state)%>%
+  filter(n()>100)%>%
+  summarise(top_res = mean(stars, na.omit=T), Cantidad_res =n())%>%
+  arrange(-top_res)
+  
+
+```
+El Dorado Hills (EDH) es el estado con restarutant con más estrellas promedio
+
+
+
+### Restaurant por tipo de ambiente, estado y precio.
+
+```{r}
+
+bussiness_data%>%
+  group_by(ambiente, state)%>%
+  summarise(Price_pro= mean(`Price Range`, na.omit=T), Cantidad_res =n())%>%
+  filter(Cantidad_res >100)%>%
+  arrange(-Price_pro)
+
+```
+
+
+En promedio los resturantes más costoso se encuentran en Nevada  y en Arizona
+
+
+
+
+
+
+
+
+### Restaurantes que no sirven alcochol y son del tipo familiar 
+```{r}
+bussiness_data%>%
+  filter(Alcohol =="none", `Good for Kids`==T )%>%
+  group_by(good_for, state)%>%
+  summarise(Stars_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total>100)%>%
+  arrange(-Total)
+```
+
+Los Restaurantes donde no sirven alcochol y son buenos para niños, estan en su mayoría en Arizona Y Nevada
+
+
+
+
+
+### Los Restaurantes para Adultos 
+
+Es decir Alcohol y sin niños
+
+
+```{r}
+  bussiness_data%>%
+  filter(Alcohol !="none", `Good for Kids`==F )%>%
+  group_by(good_for, state)%>%
+  summarise(Stars_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total>100)%>%
+  arrange(-Total)
+```
+
+
+Arizona y Nevada son los estados punta, además como se puede observar son restaurantes en su mayoria calificados como buenos para cenar
+
+
+### Restaurantes que no aceptan tarjeta de crédito y no tienen servicio de Mesoneros
+
+```{r}
+
+bussiness_data%>%
+  filter(`Accepts Credit Cards` != "NA", `Waiter Service` == FALSE)%>%
+  group_by(good_for, state, `Accepts Credit Cards`, `Waiter Service`)%>%
+  summarise(Star_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total >10)%>%
+  arrange(-Star_pro, -Total)
+
+
+```
+
+Los mejores estan ubicados en Pennsylvania y en Nevada, a pesar de no aceptar tarjeta de crédito tienen calficación en promedio de 4 estrellas
+
+
+
+### Por tipo de Múica
+
+
+```{r}
+bussiness_data%>%
+  filter(music != "Other")%>%
+  group_by(good_for, state, music)%>%
+  summarise(Star_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total >10)%>%
+  arrange(-Star_pro, -Total)
+
+
+```
+
+
+Los restaurantes con música de fondo, ofrecen las mejores experiencias y estan mejor calificados
+
+
+
+
+```{r}
+
+bussiness_data%>%
+  filter(Smoking!="NA", Smoking!="no", Alcohol != "none", ambiente == "hipster")%>%
+  group_by(state, Alcohol, ambiente, Smoking)%>%
+  summarise(Star_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total >5)%>%
+  arrange(-Star_pro, -Total)
+```
+
+Arizona, Wisonsin  y Quebec  son las zonas con mas restaurante hipster que permiten fumadores, mientras que los restaurantes hispter que no permiten fumadores son mejor valorades
+
+
+```{r}
+
+bussiness_data%>%
+  filter(Smoking=="no", Alcohol != "none", ambiente == "hipster")%>%
+  group_by(state, Alcohol, ambiente, Smoking)%>%
+  summarise(Star_pro = mean(stars, na.omit=T), Total = n())%>%
+  filter(Total >1)%>%
+  arrange(-Star_pro, -Total)
+  
+```
+
+
+
+
+
+
+

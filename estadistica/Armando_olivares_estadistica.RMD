@@ -1,0 +1,324 @@
+---
+title: "PRÁCTICA DE ESTADÍSTICA"
+author: "Armando Olivares"
+date: "19 de noviembre de 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+Los datos siguientes contienen los precios y otros atributos de unos 54.000 diamantes y se encuentran en http://ggplot2.tidyverse.org/reference/diamonds.html. También allí hay una descripción de lo que significan las variables.  El objetivo del ejercicio es hacer un análisis descriptivo, con el fin de entender los datos y las posibles relaciones entre las variables. 
+
+
+
+# 1. Cargamos los datos y librerias a utilizar
+
+```{r}
+rm(list = ls())
+##Cargamos las librerias a utilizar
+suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(dplyr)))
+suppressWarnings(suppressMessages(library(corrplot)))
+data(diamonds)
+glimpse(diamonds)
+```
+
+
+## Exploramos nuestro dataset para conocer un poco los datos
+
+Primero las dimensiones:
+```{r}
+dim(diamonds)
+```
+
+Luego algunas medidas de tendencia central:
+```{r}
+summary(diamonds)
+```
+
+Y la estructura de nuestros datos:
+```{r}
+str(diamonds)
+```
+
+
+**Observamos que nuestro dataset contienes 53.940 diamante con 10 variables que los definen, tenemos 3 variables categóricas y 7 variables numéricas.**
+
+
+
+# 2. Exploramos las Frecuencias de las Variables Categóricas
+
+```{r}
+table(diamonds$cut)
+table(diamonds$color)
+table(diamonds$clarity)
+```
+
+Y las frecuencias Relativas:
+```{r}
+prop.table(table(diamonds$cut))*100
+prop.table(table(diamonds$color))*100
+prop.table(table(diamonds$clarity))*100
+
+```
+
+**El corte predominante es el _Ideal_, el color predominante es el _G_ y la claridad es _SI1_**
+
+# 3. Exploramos Graficamente las variables
+
+
+### Primero revisamos las correlaciones entre variables
+
+#### Para ello tomamos una muestra aleatoria de 10.000 elementos de nuestro set de datos esto con el fin de no tener demasiado tiempo de computo.
+
+```{r}
+set.seed(1) 
+index_sample = sample(x = 1:nrow(diamonds), 10000)
+diamonds_sample= diamonds[index_sample, ]
+head(diamonds_sample)
+```
+
+
+```{r}
+pairs(diamonds_sample)
+```
+
+**Con este gráfico es difícil poder observar las relaciones con claridad, por lo que exploraremos solo las variables númericas**
+
+## Seleccionamos solo númericas:
+
+```{r}
+
+diamonds_numericos <- diamonds_sample[,sapply(diamonds_sample, is.numeric)]
+corrplot(cor(diamonds_numericos), method = "number") 
+```
+
+**Se observa (como es de esperar) que la variable precio está muy correlacionado con los quilates (carat), y con las dimensiones ó talla (x,y,z) del diamante, con la variable table no parece haber relación.**
+
+#### Gráfico de Carats en Funcion del precio
+```{r}
+ggplot(data = diamonds, aes(x = carat, y = price, col = (color)) )+ labs(title = "Precio vs Carats")+theme(plot.title = element_text(hjust = 0.5)) + geom_point()
+```
+
+
+
+#####**dificil de interpretar, mejor realizamos un gráfico separando por color, aunque la relación parece ser exponencial**
+
+
+
+#### Graficamos Carats en Funcion del precio agrupados por color del diamante
+```{r}
+ggplot(data = diamonds, aes(x = carat, y = price, col = (color))) + geom_point()+facet_wrap(~color, scales="free_y")
+```
+
+
+**Se observa graficamente la clara relación entre precio-quilate, con mayor o menor pendiente dependiendo del color.**
+
+
+#### Graficamos Carats en Funcion del precio agrupados por la claridad del diamante
+```{r}
+ggplot(data = diamonds, aes(x = carat, y = price, col = (clarity))) + geom_point()+facet_wrap(~clarity, scales="free_y")
+```
+
+
+**Se observa graficamente la clara relación entre precio-quilate agrupados por claridad con IF (la mejor) con mayores ####precios pero dimantes de menos tamaños.**
+
+
+#### Gráfico de Histogramas agrupados por corte 
+
+observamos la relación precio -quilate por tipo de corte
+```{r}
+ggplot(data = diamonds, aes(color = cut)) + geom_histogram(aes(x=diamonds$price))+facet_wrap(~cut, scales="free_y")
+```
+
+**Se observa que los precios que tienen más variacion son los del corte _Premiun_ y también los precios más altos, mientras que para el corte _Ideal_ notamos que agrupa los diamantes con los precios más bajos**
+
+
+
+## Ahora observaremos la distribución de los datos con el diagrama de cajas
+
+### Para los datos agrupados por Clarity
+```{r}
+
+ggplot(diamonds, aes(x = clarity, y=price, fill=clarity)) +
+        geom_boxplot()
+
+```
+
+**Se nota que para la medida de claridad SI2(de la peor en la escale) tenemos el mayor peso**
+
+```{r}
+
+ggplot(diamonds, aes(x = color, y=price, fill=color)) +
+        geom_boxplot()
+
+```
+
+
+Las medidas  para los diamante agrupados por color:
+
+```{r}
+by(diamonds$price, diamonds$color, summary)
+```
+
+**El color con la media de precio más alto es el J, según la descripcion de nuestro dataset es el peor color en la escala J-D**
+
+
+
+### Agrupamos por color y claridad para observar la distribución:
+```{r}
+ggplot(diamonds, aes(x = clarity, y=price, fill=clarity)) +
+        geom_boxplot()+facet_wrap(~color, scales="free_y")
+```
+
+
+**se confirma graficamente que los diamantes _SI2_ con color _J_ (de los peores en la escala de clasificación) son los que tienen la media de precio más altos.**
+
+
+### Con la Variable Carats:
+####Para realizar el boxplot de la variable carats, debemos tomar en cuenta que esta variable es una variable continua
+####por lo que lo que haremos es categorizar esta variable en 4 grupos en un nueva variable llamada "fcarat" que añadiremos a nuestro set de datos
+
+```{r}
+diamonds$fcarat<-cut(diamonds$carat, c(0,1,2,3))
+diamonds$fcarat <- "0"
+diamonds$fcarat[diamonds$carat < 1] <- "small"
+diamonds$fcarat[diamonds$carat >= 1 & diamonds$carat < 2] <- "medium"
+diamonds$fcarat[diamonds$carat >= 2 & diamonds$carat < 3] <- "big"
+diamonds$fcarat[diamonds$carat >= 3] <- "extra big"
+diamonds$fcarat <- factor(diamonds$fcarat,  levels = c('small','middle', "big", "extra big"),ordered = TRUE)
+ggplot(diamonds, aes(x = (fcarat), y=price)) +
+        geom_boxplot()
+
+```
+
+```{r}
+table(diamonds$fcarat)
+```
+
+y la distribución en porcentaje:
+```{r}
+prop.table(table(diamonds$fcarat))*100
+```
+
+###De todo lo anterios podemos Extraer:
+* Los diamantes más grandes (carat) tienen los precios más altos, aunque son mucho más raros de encontrar como se muestra en la tabla anterior, solo hay en nuestro dataset 2114 diamantes de tamaño "grande" (entre 2-3 quilates) y de tamaño "extra grande" (mayor a 3 quilate) soy hay 40.
+* Las variables que pueden tener más peso en un modelo para predecir el precio son: carat, clarity, color y corte
+
+
+
+
+
+
+
+# 3. Realizar un contraste de hipótesis para determinar si la media de carat es igual para las categorías cut-Fair y cut-Good). 
+
+##### La hipostesis nula es que la media son iguales, la hipotesis alterna las medias son distintas
+##### para este test haremos uso de la funcion t.test
+
+Primero separamos nuestro datos del dataset
+
+```{r}
+df_fair_good <- diamonds %>%
+        filter(cut == "Fair" | cut == "Good") %>%
+        select(cut, carat)
+
+#Medidas de Tendencia central para Fair
+summary(df_fair_good %>% 
+          filter(cut == "Fair") %>% 
+          .$carat)
+
+#Medidas de Tendencia Cental para Good
+summary(df_fair_good %>% 
+          filter(cut == "Good") %>% 
+          .$carat)
+
+
+
+```
+
+
+### De los datos vemos que en promedio parece que para el Corte _Fair_ la media es más alta que para el corte _Good_
+#### Observamos los datos graficamente
+
+
+```{r}
+ggplot(data = df_fair_good, aes(cut, carat)) +
+        geom_boxplot()
+```
+
+
+
+### Estudiamos la normalidad de nuestros datos, para inferir si debemos realizar alguna transformacion antes de aplicar el t.test
+
+* Chequeamos si los datos siguen una distribucion normal
+* Asumimos que las variables son indenpendientes
+
+
+
+## Si hacemos los histogramas de los datos agrupados por corte podemos observar que no siguen una distribucion normal
+
+```{r}
+ggplot(df_fair_good, aes(carat)) +
+        geom_histogram() +
+        facet_wrap(~ cut)
+
+
+```
+
+
+```{r}
+ks.test((df_fair_good[df_fair_good$cut =="Good",]$carat), "pnorm")
+```
+
+
+
+Sin embargo asumimos que las medias siguen a la normal por el Teorema del Limite Central (TLC)
+
+### Realizamos el t.test 
+```{r}
+t.test(log(carat) ~ cut, data = df_fair_good)
+```
+
+**Del resultado deducimos que rechazmos la hipótesis nula, las medias no son iguales
+
+
+###Como datos no siguen fielmente a una Distribucion normal, y para confirmar el test de hipotesis aplicamos alguna transformación de nuestra variable carat para volver a aplicar el t.test
+**En este caso tomamos el log de la variable**
+
+
+```{r}
+ggplot(df_fair_good, aes(sample = log(carat)))+
+       geom_point(stat = "qq")
+```
+
+y el histograma de la transformación:
+
+```{r}
+ggplot(df_fair_good, aes(carat)) +
+        geom_histogram() +
+        facet_wrap(~ cut) +
+        scale_x_log10()
+```
+
+
+Del grafico notamos que se acerca más a una normal, pero aùn no fielmente, in embargo por el TLC asumimos normalidad para las medias
+
+
+
+
+
+### Volvemos a realizar el t.test 
+```{r}
+t.test(log(carat) ~ cut, data = df_fair_good)
+```
+
+
+## **Extraemos entonces de los t.test realizados y del p-valor que rechazamos la hipótesis nula, ya que con un 95% de confianza la diferencia de las medias no es igual a 0, por lo que concluimos que las medias ó promedio son distintos**
+
+
+
+
+

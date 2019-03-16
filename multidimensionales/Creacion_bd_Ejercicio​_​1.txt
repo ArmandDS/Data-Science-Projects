@@ -1,0 +1,58 @@
+-- -------------------------------------------------------------------------------------------
+-- Script de Creacion de Base de Datos Tarea 1 y Generacion de Tablas
+-- Armando Olivares --
+-- ------------------------------------------------------------------------------------------
+
+
+
+-- Se asume que nuestro usuario tiene privilegios de creación de BD y tablas
+-- Los tipos de datos de los atributos de las tablas se seleccionaron revisando el archivo excel datos_accidentes.xls
+
+
+-- Creamos la BD que llamaremos tarea1_mdx
+
+
+--  Modificar el script entregado como parte del Ejercicio 2 de “BD relacionales” para convertirlo​ ​en​ ​un​ ​esquema​ ​en​ ​estrella.
+-- Para convertirlo en un esquema estrella primero debemos definir nuestra tabla de hechos (the fact table) en nuestro caso se corresponde a la tabla datos_accidentes
+create database tarea1_mdx;
+
+
+-- La seleccionamos
+use  tarea1_mdx;
+
+-- Creamos las tablas y sus relaciones
+-- unimos la tabla comunidad autonoma con la tabla provincias esto con el fin de establecer niveles, dicha tabla tendrá un pk compuesta
+create table comunidad_autonoma (
+ id varchar(2) NOT NULL,
+ ccaa    varchar(255) DEFAULT NULL,
+ provincia varchar(255) DEFAULT NULL,
+ id_provincia varchar(3) NOT NULL,
+ CONSTRAINT pk1 PRIMARY KEY (id, id_provincia)
+);
+
+
+-- Creamos la tabla via, esta tabla permanece igual
+create table via (
+ id varchar(1) NOT NULL,
+ tipo_via varchar(255) DEFAULT NULL,
+ CONSTRAINT pk_via PRIMARY KEY (`id`)
+);
+
+
+-- Creamos la tabla que contiene los datos de los accidentes y su relación con las otras tablas
+create table datos_accidentes (
+
+ fecha_ano int(11) NOT NULL,
+ id_ccaa varchar(2) NOT NULL,
+ id_provincia varchar(3) NOT NULL,
+ id_via varchar(1) NOT NULL,
+ accidentes_con_victimas int(11) DEFAULT NULL, 
+ accidentes_mortales_30_dias int(11) DEFAULT NULL,
+ fallecidos int(11) DEFAULT NULL,
+ heridos_hospitalizados int(11) DEFAULT NULL,
+ heridos_no_hospitalizados int(11) DEFAULT NULL,
+ CONSTRAINT fk_da2 FOREIGN KEY (id_via) 
+ REFERENCES via	(id),
+ CONSTRAINT fk_da1 FOREIGN KEY (id_ccaa, id_provincia) 
+ REFERENCES comunidad_autonoma	(id, id_provincia)
+);

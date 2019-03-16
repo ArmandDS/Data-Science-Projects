@@ -1,0 +1,403 @@
+---
+title: "tarea"
+author: "Armando Olivares"
+date: "24 de noviembre de 2017"
+output: html_document
+---
+
+
+## Práctica de Regresión Lineal y Técnicas de Remuestreo
+
+
+##### La librería ISLR de R  te permite cargar el set de datos Carseats
+
+* Ajusta un modelo de regresión lineal para predecir Sales usando Price, Urban y US.
+
+
+###### Cargamos las librerías y los datos
+```{r}
+suppressWarnings(suppressMessages(library(ISLR)))
+suppressWarnings(suppressMessages(library(dplyr)))
+suppressWarnings(suppressMessages(library(corrplot)))
+suppressWarnings(suppressMessages(library(car)))
+suppressWarnings(suppressMessages(library(caret)))
+suppressWarnings(suppressMessages(library(PerformanceAnalytics)))
+data(Carseats)
+
+glimpse(Carseats)
+```
+
+Observando nuestro set de datos notamos que existen variables categóricas como ShelvLoc, Urban y US
+
+
+## Exploramos nuestro dataset para conocer un poco los datos
+
+Primero las dimensiones:
+```{r}
+dim(Carseats)
+```
+
+Luego algunas medidas de tendencia central:
+```{r}
+summary(Carseats)
+```
+
+Y la estructura de nuestros datos:
+```{r}
+str(Carseats)
+```
+
+
+
+Exploramos la correlación de las variables numericas 
+```{r}
+corrplot(cor(select(Carseats, select=-c(ShelveLoc,Urban,US))), method = "number")
+```
+
+Del grafico notamos que la correlacion más fuerte es la que existen entre _Sales_ y _Price_, también con _Sales_ y _Advertising_ y _Age_,  con las otras variables existe correlacion pero no tan fuerte
+
+## Ajusta un modelo de regresión lineal para predecir Sales usando Price, Urban y US.
+```{r}
+#Ajusta un modelo de regresión lineal para predecir Sales usando Price, Urban y US.
+modelo1<- lm(Sales ~ Price + Urban + US, data = Carseats)
+
+modelo1
+ 
+```
+
+El modelo es
+
+$$
+Sales = 13.04347 + 1.20057\cdot USYes  - 0.05446\cdot Price   -0.02192\cdot UrbanYes
+$$
+
+lo cual implica que a medida que las ventas disminuyen con el aumento del precio y de si la tienda esta ubicada en un entorno Urbano; y las ventas aumentan si la tienda esta ubicada en los EE.UU
+
+
+
+
+### ¿Cuáles de los predictores tienen una relación estadísticamente signifcativa con la variable respuesta? En base a esto, construye un modelo reducido que sólo emplee esos predictores, y compara su bondad de ajuste con el modelo anterior. 
+
+### Observamos las variables significativas con el p-valor
+```{r}
+summary(modelo1)
+```
+
+**Observamos que las variables significtivas son el _Intercept_ (b), _Price_ y _USYes_. mientras que la variable _UrbanYes_ no es significativa para nuestro modelo**
+
+### Construimos el nuevo modelo reducido
+
+```{r}
+modelo_red <- lm(Sales ~ Price +  US, data = Carseats)
+modelo_red
+```
+
+
+```{r}
+summary(modelo_red)
+```
+
+
+
+La bondad del ajuste de la recta a los datos se obtiene del  Multiple R-squared, que para el modelo1 es  **0.2393** y para el modelo reducido (modelo_red) es **0.2393** es decir **no** hay variación, aunque sí mejoró nuestro estadístico F desde **41.52** hasta **62.43**
+
+
+Los intervalos de confianza para el modelo reducido:
+```{r}
+confint(modelo_red)
+```
+
+
+
+
+### Estudia la existencia de outliers o high leverage points en este último modelo.
+
+Gaficamos los residuos vs las ventas reales:
+```{r}
+plot(Carseats$Sales, modelo_red$residuals)
+abline(0, 0, col="red")  
+```
+
+**Importante** según esta grafica existen heterodasticidad, esto es nuestro modelo **No** está capturando toda la información posible, puede deberse a falta de alguna variable para nuestro modelo.
+
+
+```{r}
+plot(Carseats$Sales, modelo_red$fitted.values, type = 'p', col = 'red', xlab = 'Sales', ylab = 'Predicted Sales')
+```
+
+
+##Examinamos los outliers
+
+```{r}
+boxplot(modelo_red$residuals)
+  
+```
+
+Existen pocos __outliers__ en nuestros datos
+
+
+Observamos los valores de de los residuos graficamente
+```{r}
+
+plot(modelo_red)
+
+```
+
+#### Se extrae: 
+ * Del grafico _Residuals vs Fitter_ vemos que los residuos presentan aleatoriedad y no siguen patrón alguno
+ * Del Grafico _Normal Q-Q_ vemos que los residuos siguen una normal
+ * Del grafico _Scale-location_ vemos que los residuos estan aleatoriamente distribuidos, 
+ * Del grafico _Residual vs Leverage_ observamos que todos los datos caen dentro de la linea de la distancia de Cook, por lo que podemos asumir que no existen outliers que influyan significativamente en nuestro modelo de regresión
+
+
+
+
+#### Por Ultimo Estudiamos la presencia de high-leverage points:
+
+```{r}
+plot(hatvalues(modelo_red), col = 'red')
+grid()
+
+```
+
+Podemos decir que los valores por encima de **0.02** son outliers (alrededor de 7 puntos) por lo que si los eliminanos podremos mejorar un poco nuestro modelo, aunque tampoco representan un grave problema porque tampoco influyen significativamente como observamos en las graficas de los residuos
+
+
+
+
+#### Finalmente, estudiamos la colinealidad:
+
+```{r}
+vif(modelo_red)
+```
+
+las variables **no** son colineales, y Nuestro Modelo es **mejorable**
+
+
+
+
+
+
+
+## Ejercicio 2
+#####Del mismo modo, la librería Ecdat de R te permite cargar el set de datos Caschool. Construye un modelo de regresión lineal que permita predecir testscr (debes realizar el análisis completo: desde la exploración inicial de los datos hasta el ajuste del modelo final y la presentación de resultados, pasando por los diferentes pasos que te permitan optimizar tu primer modelo).
+
+
+#### Cargamos la librerias y los datos
+```{r}
+suppressWarnings(suppressMessages(library(Ecdat)))
+data("Caschool")
+glimpse(Caschool)
+
+```
+
+
+
+#### Exploramos los datos
+
+```{r}
+dim(Caschool)
+str(Caschool)
+
+```
+Nuestro data set contiene 420 observaciones de 17 variables, de las cuales 4 son categóricas
+
+Exploremos las varables categóricas
+```{r}
+length(unique(Caschool$county))
+length(unique(Caschool$distcod))
+length(unique(Caschool$district))
+length(unique(Caschool$grspan))
+```
+
+Como se observa por la cantidad de valores distintos en las variables categóricas _county_, _distcod_ y _district_ y por el tamaño de nustro dataset decidimos sacar estas variables de nuestro modelo (y para evitar _the curse of dimensionality_) 
+
+
+```{r}
+## Seleccionamos solo númericas:
+
+casschol_numericos <- Caschool[,sapply(Caschool, is.numeric)]
+corrplot(cor(casschol_numericos)) 
+```
+
+## y el Correlograma de los datos:
+```{r}
+suppressWarnings(chart.Correlation(casschol_numericos, histogram=TRUE, pch=19))
+```
+
+
+
+Se observa que la varible _testscr_ presenta una fuerte correlación con las variables _calwptc_, _melaptc_, _avginc_, _elptc_, _readscr_ y _mathscr_.
+En el correlograma además se esboza la tendencia o tipo de relación que puede haber entre las variables (lineal, cuadrática, etc)
+
+
+
+##### Construimos nuestro primer modelo
+
+```{r}
+modelo1 <- lm( testscr  ~ . -distcod -county -district, data = Caschool  )
+```
+
+
+```{r}
+summary(modelo1)
+```
+
+**En la descripcion de nuestro dataset, se nos dice que la variable _testscr_ es combinación de las variables _readscr_ y _mathscr_ por lo que debemos sacarlas de nuestro modelo**
+
+
+Seleccionamos las variables a utilizar con el metodo _backward_, comenzamos con un modelo full y exploramos quitando variables hasta llegar al modelo que mejor ajuste 
+
+```{r}
+lm_all <- lm(formula = testscr ~ . - distcod - county - district -readscr - mathscr, data = Caschool)
+lm_null <- lm(testscr~ 1, data = Caschool)
+testscr_fit_bwd <- step(lm_all, lm_null, direction = 'backward')
+```
+
+
+La selección automatica de variables nos indica que las variables _grspan_, _calwpct_, _mealpct_, _compstu_, _expnstu_, _avginc_ y _elpct_ son las más importantes para nuestro modelo
+
+Examinamos este modelo:
+```{r}
+summary(testscr_fit_bwd)
+```
+
+**Sin embargo notamos que hay variables que no son significativas como _calwptc_, _compstu_ e inclusive _expnstu_**
+
+
+### Construimos un nuevo modelo tomando el polinomio grado 3 de la variable _calwptc_ y quitando a la variable _compstu_:
+
+```{r}
+modelo_final <- lm( testscr  ~   grspan  + mealpct +  avginc + elpct +expnstu+ poly(calwpct,3), data = Caschool  )
+summary(modelo_final)
+```
+
+La bondad de ajuste ha aumentado un poco, por lo que parece que nuestro modelo tendrá un **mejor** desempeño.
+
+
+
+```{r}
+plot(modelo_final)
+```
+
+No parece haber problemas con nuestro modelo.
+
+```{r}
+plot(Caschool$testscr, modelo_final$residuals)
+abline(0,0, col = "red")
+```
+
+
+Revisamos la colinealidad:
+
+```{r}
+vif(modelo_final)
+```
+
+**No** hay colinealidad en las variables seleccionadas
+
+
+
+#### Por Ultimo Estudiamos la presencia de high-leverage points:
+
+```{r}
+plot(hatvalues(modelo_final), col = 'red')
+grid()
+
+```
+
+
+#### En la construcción del modelo del ejercicio anterior habrás pasado por varios modelos intermedios. Considera el modelo final y un par de esos modelos intermedios y, mediante leave-one-out cross-validation y 10-fold cross-validation, estima su capacidad predictiva en situaciones reales y justifica si tu elección en el ejercicio anterior era acertada o no.
+
+
+## Con LOOCV
+
+* Modelo 1 con todas las variables
+* Modelo 2 con las variables que recomienda el modelo con _stepwise_
+* Modelo 3 nuestro modelo final
+```{r}
+# LOOCV
+err_1 <- c()
+err_2 <- c()
+err_3 <- c()
+for(i in 1:nrow(Caschool)){
+  modelo_1 <- lm(testscr ~ grspan + enrltot +teachers+ calwpct + mealpct + computer + compstu + expnstu + str + avginc + elpct,    data = Caschool[-i,])
+  modelo_2 <- lm(testscr ~ grspan + calwpct + mealpct + compstu + expnstu + avginc + elpct, data = Caschool[-i,])
+  modelo_3 <- lm(testscr  ~   grspan  + mealpct +  avginc + elpct+ expnstu+ poly(calwpct,3), data = Caschool[-i,])
+  err_1 <- c(err_1, (Caschool$testscr[i] - predict(modelo_1, Caschool[i,]))**2)
+  err_2 <- c(err_2,  (Caschool$testscr[i] - predict(modelo_2,Caschool[i,]))**2)
+  err_3 <- c(err_3,  (Caschool$testscr[i] - predict(modelo_3, Caschool[i,]))**2)
+}
+mean(err_1)
+mean(err_2)
+mean(err_3)
+
+```
+
+Con este LOOCV observamos que el modelo que tiene más error es el modelo 1 que corresponde al modelo con todas las variables, mientras el mejor modelo es el nuestro.
+
+
+El grafico comparativo: 
+```{r}
+plot(err_1, col="navy", type="b", ylim=c(min(err_1,err_2,err_3), max(err_1,err_2,err_3)+ 0.05), main = "Variación del Error", xlab="Número de interaciones", ylab = "Estimación de Error")
+points(err_2, col="green", type = "b")
+points(err_3, col="red", type = "b")
+legend("topright", legend = c("Modelo 1", "Modelo 2", "Modelo 3"), col = c("navy","green","red"), lty = 1, lwd= 1, cex = .7)
+
+
+```
+
+
+
+# Con  k-fold CV ( k = 10)
+
+
+```{r}
+set.seed(1)
+fold_index_list <- createFolds(Caschool$testscr, k = 10)
+mat_err <- matrix(nrow = 0, ncol = 6)
+colnames(mat_err) <- c('mse_train_1', 'mse_test_1', 'mse_train_2', 'mse_test_2', 'mse_train_3', 'mse_test_3')
+for(fold in fold_index_list){ 
+  training_data <- Caschool[-fold, ] 
+  test_data <- Caschool[fold, ] 
+  modelo_1 <- lm(testscr ~ grspan + enrltot + calwpct + teachers+ mealpct + computer + compstu + expnstu + str + avginc + elpct,    data = Caschool[-i,])
+  modelo_2 <- lm(testscr ~ grspan + calwpct + mealpct + compstu + expnstu + avginc + elpct, data = Caschool[-i,])
+  modelo_3 <- lm(testscr  ~   grspan  + mealpct +  avginc + elpct+ expnstu+ poly(calwpct,3), data = Caschool[-i,])
+  mse_train_1 <- mean((modelo_1$residuals)**2) 
+  mse_train_2 <- mean((modelo_2$residuals)**2) 
+  mse_train_3 <- mean((modelo_3$residuals)**2) 
+  mse_test_1 <- mean((test_data$testscr - predict(modelo_1, test_data))**2)
+  mse_test_2 <- mean((test_data$testscr - predict(modelo_2, test_data))**2)
+  mse_test_3 <- mean((test_data$testscr - predict(modelo_3, test_data))**2)
+  mat_err <- rbind(mat_err, c(mse_train_1,
+                      mse_test_1,
+                      mse_train_2,
+                      mse_test_2,
+                      mse_train_3,
+                      mse_test_3))
+}
+mat_err <- as.data.frame(mat_err)
+colMeans(mat_err)
+
+err_1<- mat_err$mse_test_1
+err_2<- mat_err$mse_test_2
+err_3<- mat_err$mse_test_3
+```
+
+
+
+
+Graficamente: 
+```{r}
+plot(err_1, col="navy", type="b", ylim=c(min(err_1,err_2,err_3), max(err_1,err_2,err_3)+ 0.05), main = "Variación del error en Test", xlab="Número de interaciones", ylab = "Estimación de Error")
+points(err_2, col="green", type = "b")
+points(err_3, col="red", type = "b")
+legend("topright", legend = c("Modelo 1", "Modelo 2", "Modelo 3"), col = c("navy","green","red"), lty = 1, lwd= 1, cex = .7)
+abline(h=mean(err_1), col="navy")
+abline(h=mean(err_2), col="green")
+abline(h=mean(err_3), col="red")
+
+```
+
+
+**Nuevamente se confirma que nuestro modelo ES el mejor de los posibles, ya que presenta un Mejor desempeño en los datos de test que los otros modelos, según podemos ver en los resultados del cross validation, por lo que nuestra elección  fue acertada**

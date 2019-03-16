@@ -1,0 +1,23 @@
+-- ----------------------------------------------------
+-- Script de llenado de Tablas
+-- Armando Olivares 
+-- ---------------------------------------------------
+
+
+-- Para llenar la Tabla Comunidad:
+INSERT INTO comunidad_autonoma
+SELECT DISTINCT id_ccaa, ccaa, provincia, id_provincia
+FROM accidentes;
+
+
+-- Llenar Tabla via
+INSERT INTO via
+SELECT DISTINCT id_tipo_via, tipo_via
+FROM accidentes;
+
+-- Llenar tabla datos_accidentes
+INSERT INTO datos_accidentes (accidentes_con_victimas, accidentes_mortales_30_dias, fallecidos, heridos_hospitalizados, heridos_no_hospitalizados, fecha_ano, id_ccaa,id_provincia, id_via)
+SELECT  accidentes_con_victimas, accidentes_mortales_30_dias,fallecidos, heridos_hospitalizados, heridos_no_hospitalizados, ano, id_ccaa, id_provincia, id_tipo_via
+FROM accidentes;
+
+

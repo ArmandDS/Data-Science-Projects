@@ -1,0 +1,13 @@
+El paquete se llama dummy
+
+Para instalarlo:
+install_github("ArmandDS/rpackage")
+
+Para Cargarlo:
+library(dummy)
+
+
+Funciones: 
+concatenar_cadenas("hola", "dos") # Devuelve la concatenacion
+
+cadena_mas_larga("hola", "ejemplo) # Devuelve la cadena más larga

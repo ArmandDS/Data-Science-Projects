@@ -1,0 +1,97 @@
+# ==========================================================
+# = Solver Results                                         =
+# ==========================================================
+# ----------------------------------------------------------
+#   Problem Information
+# ----------------------------------------------------------
+Problem: 
+- Name: unknown
+  Lower bound: 4400.60811070603
+  Upper bound: 4400.60811070603
+  Number of objectives: 1
+  Number of constraints: 47
+  Number of variables: 61
+  Number of nonzeros: 151
+  Sense: maximize
+# ----------------------------------------------------------
+#   Solver Information
+# ----------------------------------------------------------
+Solver: 
+- Status: ok
+  Termination condition: optimal
+  Statistics: 
+    Branch and bound: 
+      Number of bounded subproblems: 19
+      Number of created subproblems: 19
+  Error rc: 0
+  Time: 0.05865788459777832
+# ----------------------------------------------------------
+#   Solution Information
+# ----------------------------------------------------------
+Solution: 
+- number of solutions: 1
+  number of solutions displayed: 1
+- Gap: 0.0
+  Status: optimal
+  Message: None
+  Objective:
+    OBJ:
+      Value: 4400.608110706027
+  Variable:
+    e[1,1]:
+      Value: 1
+    e[1,2]:
+      Value: 1
+    e[1,4]:
+      Value: 1
+    e[1,5]:
+      Value: 1
+    e[2,2]:
+      Value: 1
+    e[2,4]:
+      Value: 1
+    e[3,3]:
+      Value: 1
+    e[3,5]:
+      Value: 1
+    e[4,5]:
+      Value: 1
+    e[4,6]:
+      Value: 1
+    e[5,1]:
+      Value: 1
+    e[5,3]:
+      Value: 1
+    e[5,5]:
+      Value: 1
+    e[5,6]:
+      Value: 1
+    x[1,1]:
+      Value: 53
+    x[1,2]:
+      Value: 336
+    x[1,4]:
+      Value: 151
+    x[1,5]:
+      Value: 306
+    x[2,2]:
+      Value: 318
+    x[2,4]:
+      Value: 165
+    x[3,3]:
+      Value: 159
+    x[3,5]:
+      Value: 337
+    x[4,5]:
+      Value: 340
+    x[4,6]:
+      Value: 103
+    x[5,1]:
+      Value: 239
+    x[5,3]:
+      Value: 125
+    x[5,5]:
+      Value: 126
+    x[5,6]:
+      Value: 198
+  Constraint: No values

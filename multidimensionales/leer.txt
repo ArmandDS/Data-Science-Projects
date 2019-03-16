@@ -1,0 +1,7 @@
+Archivos en este zip:
+
+1. Creacion_BD_Ejercicio_1 = SQL script para crear la bd y las tablas
+2. poblado_BD_Ejercicio_1 = SQL script que llena las tablas a partir de la tabla accidentes
+3. tarea_mdx.ic-schema =  fichero XML de definición exportado desde  icCube. 
+4. Armando_olivares_multidimensionales.pdf = Documento explicativo del proceso de creacion de la BD
+5. Consultas_Ejercicio_4 = fichero con las consutas en mdx del ejercicio 4.

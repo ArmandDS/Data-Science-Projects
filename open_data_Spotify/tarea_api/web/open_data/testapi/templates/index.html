@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<head>
+  <title>100 Años de Música</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://d3js.org/d3-scale.v2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+<style>
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 0.1px;
+}
+.node circle {
+  fill: steelblue;
+  stroke: #fff;
+  stroke-width: 0.5px;
+}
+.node text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+
+.barplot div{
+  font: 10px sans-serif;
+
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: white;
+}
+
+.bar {
+
+  margin-left: 1px;
+  margin-right:1px
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: black;
+  stroke: #000;
+
+}
+
+
+
+</style>
+</head>
+<body onload="dibujar__grafo(0)">
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      <a class="navbar-brand" href="#">Logo</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="/testapi/proceso">Proceso</a></li>
+        <li><a href="/testapi/codigo">Codigo</a></li>
+        <li><a href="#">Resumen</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <!-- <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li> -->
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+<div class="row">
+
+  <div class="col-xs-12 col-md-8" ,style="min-height:100px;">
+    <h2>Grafo</h2> 
+<div class="form-group">
+  <label for="sel1">Grafo Por Décadas:</label>
+  <select class="form-control" id="select_decada">
+    <option value="1950">Década 40</option>
+    <option value="1960">Década 50</option>
+    <option value="1970">Década 60</option>
+    <option value="1980">Década 70</option>
+	<option value="1990">Década 80</option>
+	<option value="2000">Década 90</option>
+	<option value="2010">Década 00</option>
+	<option value="2020">Década 10</option>
+  </select>
+  <div id="controls" style="display:none">
+  <input name="mode" type="radio" value="force" id="mode-force" checked>
+  <label for="mode-force"> Force-Directed</label>
+  <input name="mode" type="radio" value="circle" id="mode-circle">
+  <label for="mode-circle"> Circle</label>
+</div>
+</div>	
+	<div id="svg"  width="700" height="500"></div>
+ 
+  </div>
+
+     <div class="col-xs-12 col-md-4">
+       <h2>Gráfico de Barras de las métricas</h2>
+<div id="svg2"  class="svg2"></div>
+<br><br><br>
+<div id="tabla_desc">
+<table  width=" 100%">
+<tr>
+    <th>Años</th>
+    <th>Grupos</th> 
+    <th>Canciones</th>
+  </tr>
+  <tr>
+    <td><div id="tabla_years" ></div></td>
+    <td><div id="tabla_grupo" ></div></td> 
+    <td><div id="tabla_songs" ></div></td>
+  </tr>
+</table><br><br>
+
+</div>
+<div id="1950">
+En la década de los 40 Tenemos que el sistema agrupa en 16 cluster, puede deberse a la riqueza de género y mezcla de ritmos agrupa en:
+<ul>
+<li>Un grupo (Azul Celeste) con mucha energía y danceability canciones instrumentales y que transmiten sentimiento positivos (<i>Valence</li>) ejemplo es la cancion <b>Summit Ridge Drive de Artie Shaw</b></li>
+<li>Un grupo en Azul más Oscuro simiat al anterior pero concentra menoar cantidad de energía, con presencia más del genero soft-jazz, ejemplo <b>Accentuate The Positive Lyrics de Perry Como</b></li>
+<li>El grupo en Verde claro, con letras/ritmos más lento, ejemplo <b>I Can't Begin to Tell You de Bing Crosby</b> </li>
+<li>El grupo con verde oscuro, canciones más triste/negativas, y curiosamente con mayor preencia de vacalistas femeninas, ejemplo <b>It Might as Well Be Spring de Jeanne Crain</b> </li>
+<li>El grupo rojo,  y naranja agrupa cancion de jazz con tonos positivos </li>
+<li> El grupo Gris, y Gris Oscuro son canciones alegres, bailables del genero pop-country, ejemplo <b>Smoke! Smoke! Smoke! (That Cigarette) de Tex Williams</b><li>
+<li> El grupo color violeta, Violeta Oscuro canciones con "tempo lento", de tono pop romantico, ejemplo <b>Some Enchanted Evening del sountrack de  South Pacific</b><li>
+</ul>
+<p>En esta década predomina el jazz, y la música de orqueta</p>
+</div>
+<div id="1960">
+En la década de los 50,  Tenemos que el sistema agrupa en 2 cluster, puede debeser a que ya empieza la influencia de la música pop (música prefabricada) y del naciente rock, agrupa en:
+<ul>
+<li>Azul Celeste, agrupa canciones bailables con energía y con sentimiento positivos, ejemplo es <b>The Green Door de Jim Lowe </b>  </li>
+<li> Azul Oscuro las canciones un poco más oscuras, con mucho contenido vocal, ejemplo es <b>No not much de The Four Lads</b></li>
+</ul>
+<p>En esta década  aún predomina el jazz y comienza el pop a entrar con fuerza</p>
+</div>
+
+<div id="1970">
+En la década de los 60,  Tenemos que el sistema nuevamente agrupa en 2 cluster, agrupa en:
+<ul>
+<li>Azul Celeste, agrupa canciones bailables con energía y con sonidos alegres, ejemplo es <b>Good Time Baby de Bobby Rydell </b>  </li>
+<li> Azul Oscuro las canciones un poco más oscuras, con mucho contenido vocal, ejemplo es <b>Georgia On My Mind de Ray Charles</b></li>
+</ul>
+<p>En esta década  predomina el pop, el Rock  y el Blues</p>
+</div>
+
+<div id="1980">
+En la década de los 70,  Tenemos que el sistema  agrupa en 17 clusters, agrupa en:
+<ul>
+<li>Lo colores verdes: canciones vibrantes, positivas , por ejemplo <b>Another Day / Oh Woman, Oh Why de Paul McCartney.</b> la diferencia aquí la marca el <i>Tempo</i>  </li>
+<li> Azul Oscuro las canciones, muy instrumentales como <b>I've Got Love on My Mind de  Natalie Cole </b>, con marcada influencia del Soul</li>
+<li> Canciones en Azul Celeste,tonos naranjas y rojizos de tono melodramático, género pop, ejemplo <b>Yesterday Once More", de The Carpenter </b></li>
+
+</ul>
+<p>En esta década  predomina el pop, el Rock  y el Soul</p>
+</div>
+
+
+<div id="1990">
+En la década de los 80,  Tenemos que el sistema presenta 2 clusters, agrupa en:
+<ul>
+<li>Azul Celeste, agrupa canciones  con energía y con sonidos alegres, ejemplo es <b>Working for the Weekend de Loverboy</b></li>
+<li> Azul Oscuro las canciones más del género pop, ejemplo de ello es  <b>99 Luftballons de Nena</b></li>
+</ul>
+<p>En esta década marcada por el pop, el Rock</p>
+</div>
+
+
+<div id="2000">
+En la década de los 90,  Tenemos que el sistema presenta 7 clusters, agrupa en:
+<ul>
+<li>El cluster rojo presenta canciones mayormente, lentas, con baja energia, letras que transmiten sencaciones negativas, ejemplo de ello tenemos en este cluster <b>When You’re Gone de The Cranberries</b> </li>
+<li> El cluster azul Canciones con mucha energía, bailables como  <b>Livin' la vida loca de Ricky Martin</b></li>
+<li>El cluster de tonos naranja, de ritmos lentos, con poca acústica, un ejemplo es <b>I Do (Cherish You) de 98 degrees</b> sonido característico de los 90's</li>
+<li>El cluster verde claro, representa ritmo rapidos, con sonido característico del dance como <b>I've Been Thinking About You" de Londonbeat</b><li>
+<li>El cluster Verde oscuro representa, sonido con poco o casi nada sonido instrumental, ejemplo <b>Man! I Feel Like a Woman! de Shania Twain</b></li>
+</ul>
+<p>En esta década marcada por los género Rock, Pop, Dance, Techno y la mezcla entre ellos</p>
+</div>
+
+<div id="2010">
+En la década de los 00's,  Tenemos que el sistema presenta 5 clusters, agrupa en:
+<ul>
+<li>El cluster azul claro con canciones con mezcla de ritmos sinteticos, ejemplo  <b> Faded de Alan Walker </b> </li>
+<li> El cluster azul oscuro canciones con mucha energía, bailables como  <b>Buy U a Drank (Shawty Snappin') T-Pain</b> parece agrupar canciones del R/B contemporáneo bailables</li>
+<li>El cluster de tonos naranja, de ritmos lentos pero letras propias de rap, hip-hop  un ejemplo es <b> In Those Jeans de Ginuwine</b> sonido característico del neo Soul </li>
+<li>El cluster naranja claro, representa ritmo con menos energia con sonidos/letras un poco más negativos, ejemplo <b>Case of the Ex de Mýa.</b><li>
+<li>El cluster Verde oscuro representa, sonido con poco o casi nada sonido instrumental, poca acústica, mucha energia,  ejemplo <b>Jaded de Aerosmith</b></li>
+</ul>
+<p>En esta década marcada por los Pop, R/B contemporáneo, y ritmos Rap/hip-hop</p>
+</div>
+
+<div id="2020">
+En la década de los 10's,  Tenemos que el sistema presenta 13 clusters, algunos cluster son:
+<ul>
+<li> El cluster azul oscuro canciones con pop con sonido similares a  <b>Love Me Harder de Ariana Grande</b> parece agrupar canciones del pop adolescente</li>
+<li>El cluster de tonos naranja, de ritmo rapido bailables, letras ligeras como  <b> Happy de </b>  Pharrell Williams </li>
+<li>El cluster naranja claro, representa ritmo con menos energia con sonidos/letras un poco más negativos <b>Let Her go de Passenger</b><li>
+</ul>
+<p>En esta década marcada por los neo-generos y  más musica sintética</p>
+</div>
+
+
+<div class="videoyt " id="results">
+</div>
+  </div>
+  </div>
+
+  </div>
+  <center><p>Nota: Puede tardar en Estabilizar</p><center>
+  <footer class="container-fluid text-center navbar-inverse">
+  <p style="color:#ccc">Powered By <a href="https://github.com/ArmandDS">@Armand</a></p>
+</footer>
+
+<script>
+
+function dibujar__grafo (graph_update){
+
+var    width = 700,
+    height = 500
+	radius = 6;
+
+	
+if 	(graph_update == 0){
+	
+	
+	var svg = d3.select("#svg").append("svg")
+		  .attr("id","graph_plot")
+		  .attr("width", width)
+		  .attr("height", height);
+
+	var color = d3.scale.category20();
+
+	var force = d3.layout.force()
+		.gravity(1)
+		.distance(300) 
+		.charge(-200)
+		.linkDistance(200)
+		.size([width, height]);
+	d3.json("/static/testapi/data1940.json", function(error, graph) {
+	
+	
+	$("#tabla_years").text((1940) +"-" +(1949));
+	$("#tabla_songs").text(graph.nodes.length+" Analizadas");
+	$("#tabla_grupo").text(16+" Encontrados");
+	
+	hiddeContent(1950);
+	
+	
+	 graph.nodes = graph.nodes.sort(function(a, b) { return d3.ascending(a.group, b.group); });
+	  n_elements = graph.nodes.length;
+
+	  force
+		  .nodes(graph.nodes)
+		  .links(graph.links)
+		  .start();
+
+	  var max_value = d3.max(graph.links, function(d){ return d.value; });
+
+	  var link = svg.selectAll("links")
+		  .data(graph.links)
+		.enter().append("line")
+		  .attr("class", "link")
+		  .style("opacity", function(d) { return 0.2 + 0.8 * d.value / max_value; });
+
+	  var node = svg.selectAll("nodes")
+		  .data(graph.nodes)
+		.enter().append("circle")
+		  .attr("class", "node")
+		  .attr("r", 5)
+		  .style("fill", function(d) { return color(d.group); })
+		  .call(force.drag);
+
+
+
+	  force.on("tick", function() {
+		link.attr("x1", function(d) { return d.source.x; })
+			.attr("y1", function(d) { return d.source.y; })
+			.attr("x2", function(d) { return d.target.x; })
+			.attr("y2", function(d) { return d.target.y; });
+
+		node.attr("cx", function(d) { return d.x; })
+			.attr("cy", function(d) { return d.y; });
+	  });
+		  
+	/*  node.append("text")
+		  .attr("dx", 12)
+		  .attr("dy", ".35em")
+		  .text(function(d) { return "" });//cambiar por return  d.name*/
+		  
+
+	 node.on("mouseover", function (d) {
+					link.style('stroke-width', function(l) {
+						if (d === l.source || d === l.target)
+						return 0.4;
+					  else
+						return 0.1;
+					});
+					d3.select(this).attr("r",15)
+					d3.select(this).append("title").text(function(d) { return d.name; });
+					});
+
+
+	node.on("mouseout", function (d) {
+					link.style('stroke-width', function(l) {
+						if (d === l.source || d === l.target)
+						return 0.4;
+					  else
+						return 0.1;
+					});
+					d3.select(this).attr("r",7)
+					
+					});
+	 node.on("click", function(d){
+		 console.log("El id" +d.name);
+		 console.log("Grupo" +d.group);
+		 ajax_consulta(d.name, d.group);
+		searchYoutube( d.name);
+		});
+					
+
+	});
+	bar_plot(0,0);
+	}
+	else{
+		d3.select("#graph_plot").remove();
+		var svg = d3.select("#svg").append("svg")
+		  .attr("id","graph_plot")
+		  .attr("width", width)
+		  .attr("height", height);
+
+	var color = d3.scale.category20();
+
+	var force = d3.layout.force()
+		.gravity(1)
+		.distance(120)
+		.charge(-90)
+		.size([width, height]);
+	d3.json("/static/testapi/data"+graph_update+".json", function(error, graph) {
+	
+	$("#tabla_songs").text(graph.nodes.length+" Analizadas");
+	 graph.nodes = graph.nodes.sort(function(a, b) { return d3.ascending(a.group, b.group); });
+	  n_elements = graph.nodes.length;
+
+	  force
+		  .nodes(graph.nodes)
+		  .links(graph.links)
+		  .start();
+
+	  var max_value = d3.max(graph.links, function(d){ return d.value; });
+
+	  var link = svg.selectAll("links")
+		  .data(graph.links)
+		.enter().append("line")
+		  .attr("class", "link")
+		  .style("opacity", function(d) { return 0.2 + 0.8 * d.value / max_value; });
+
+	  var node = svg.selectAll("nodes")
+		  .data(graph.nodes)
+		.enter().append("circle")
+		  .attr("class", "node")
+		  .attr("r", 5)
+		  .style("fill", function(d) { return color(d.group); })
+		  .call(force.drag);
+
+
+
+	  force.on("tick", function() {
+    node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); });
+
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+  });
+		  
+	/*  node.append("text")
+		  .attr("dx", 12)
+		  .attr("dy", ".35em")
+		  .text(function(d) { return "" });//cambiar por return  d.name*/
+		  
+
+	 node.on("mouseover", function (d) {
+					link.style('stroke-width', function(l) {
+						if (d === l.source || d === l.target)
+						return 0.4;
+					  else
+						return 0.1;
+					});
+					d3.select(this).attr("r",15)
+					d3.select(this).append("title").text(function(d) { return d.name; });
+					});
+
+
+	node.on("mouseout", function (d) {
+					link.style('stroke-width', function(l) {
+						if (d === l.source || d === l.target)
+						return 0.4;
+					  else
+						return 0.1;
+					});
+					d3.select(this).attr("r",7)
+					
+					});
+	 node.on("click", function(d){
+		 console.log("El id" +d.name);
+		 console.log("Grupo" +d.group);
+		 ajax_consulta(d.name, d.group);
+		searchYoutube( d.name);
+		});
+					
+
+	});
+
+	bar_plot(1,0);
+	}
+
+
+}
+
+
+</script>
+
+
+<script>
+
+function hiddeContent(year){
+
+console.log('#'+year);
+var array = [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
+for (var key in array){
+			$('#'+array[key]).hide();
+			
+}
+for (var key in array){
+		if(array[key] == year){
+			$('#'+year).show();
+			}
+}
+
+}
+		 
+
+</script>
+
+<script>
+
+
+$("#select_decada").change(function(){
+	var dato = $("#select_decada :selected").val();
+	console.log(dato);
+	$("#tabla_years").text((dato-10) +"-" +(dato-1));
+	hiddeContent(dato)
+	//updateData(date);
+	dibujar__grafo(dato-10);
+	ajax_consulta(dato, -1);
+
+})
+
+
+function ajax_consulta(dato, grupo){
+
+   var seleccion = $("#select_decada :selected").val();
+   console.log(seleccion);
+	$.ajax({
+        url: '/testapi/get_decada/',
+        data: {
+          'dato': dato,
+		  'seleccion': seleccion,
+		  'grupo': grupo
+        },
+        dataType: 'json',
+        success: function (data) {
+          $("#tabla_grupo").text(data["ngrupo"]+" Encontrados");
+		  console.log(data);
+		  bar_plot(1, data);
+        }
+      });
+}
+
+
+</script>
+
+<script>
+
+
+function searchYoutube( busqueda) {
+    $('#results').html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>');
+    $('#buttons').html('');
+	var gapikey = 'AIzaSyCKMpw2nmPnon_gkh4EIXnbiAmrZNw-v4M';
+    
+   
+    q = busqueda;
+    // run get request on API
+    $.get(
+        "https://www.googleapis.com/youtube/v3/search", {
+            part: 'snippet, id',
+            q: q,
+            type: 'video',
+            key: gapikey
+        }, function(data) {
+            var nextPageToken = data.nextPageToken;
+            var prevPageToken = data.prevPageToken;
+            
+            // Log data
+            //console.log("Grupos:");
+            $('#results').html(''); 
+			//console.log(data["grupo"]+ "grupo");
+                var output = getOutput(data.items[0]);
+                
+                // display results
+                $('#results').append(output);
+
+        });
+}
+
+function getOutput(item) {
+    var videoID = item.id.videoId;
+    var title = item.snippet.title;
+    var description = item.snippet.description;
+    var thumb = item.snippet.thumbnails.high.url;
+    var channelTitle = item.snippet.channelTitle;
+    var videoDate = item.snippet.publishedAt;
+    
+    // Build output string
+    var output =   '<iframe style="margin: auto !important;display: block;" width="300" height="250" src="https://www.youtube.com/embed/'+ videoID +'"></iframe>'
+	;
+    return output;
+}
+
+
+
+
+
+
+
+
+</script>
+
+
+<script>
+
+
+function bar_plot (aux, objeto_array){
+
+if (aux == 1) {
+var dataArray = objeto_array["grupo"];
+var dataArray2 = objeto_array["cancion"];
+
+ for (var key in dataArray) {
+ 
+	dataArray[key] = Math.abs(parseFloat(dataArray[key]) )
+	dataArray2[key] = Math.abs(parseFloat(dataArray2[key]) )
+	}
+
+
+
+
+var vis = d3.select("#barplot").remove();
+
+}
+else{
+var dataArray = [ 0.17  ,   0.11  , 19.621 ,   0.0351,   0.9   ,   0.0279, 0.125 ,   0.173];
+var dataArray2 = null;
+}
+
+
+  var outerW = 300; // outer width
+  var outerH = 250; // outer height
+  var padding = { t: 0, r: 0, b: 0, l: 0 };
+  var w = outerW - padding.l - padding.r; // inner width
+  var h = outerH - padding.t - padding.b; // inner height
+  var color = d3.scale.ordinal()
+    .range(["#2E8B57", "#4169E1"]);
+
+
+
+var data_objet = []
+data_objet.push(dataArray);
+data_objet.push(dataArray2);
+
+console.log((data_objet));
+ var numberGroups = 8; // groups
+  var numberSeries = 2;  // series in each group
+  var data = d3.range(numberSeries).map(function () { return d3.range(numberGroups).map(Math.random); });
+
+  // Third, we define our scales...
+  // Groups scale, x axis
+  var x0 = d3.scale.ordinal()
+      .domain(d3.range(numberGroups))
+      .rangeBands([0, w], 0.2);
+
+
+  var x1 = d3.scale.ordinal()
+      .domain(d3.range(numberSeries))
+      .rangeBands([0, x0.rangeBand()]);
+
+  // Values scale, y axis
+  var y = d3.scale.linear()
+      .domain([0, 1]) // Because Math.random returns numbers between 0 and 1
+      .range([0, h]);
+
+	  
+var musicMetric = ['danceability', 'energy', 'loudness', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence'];
+var ticks = [0,1,2,3,4,5,6,7];
+var xAxis = d3.svg.axis()
+    .scale(x0)
+	.tickValues(ticks)
+	.tickFormat(function(d, i){ 
+				return musicMetric[i];})
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+	  
+	  
+	  
+var vis = d3.select(".svg2")
+      .append("svg:svg")
+	  .attr("id","barplot")
+      .attr("width", outerW)
+      .attr("height", outerH);
+vis.append("g")         // Add the X Axis
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + (h-85) + ")")
+        .call(xAxis)
+		 .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+			.attr("transform", "rotate(-65)" );
+
+
+  var series = vis.selectAll("g.series")
+      .data(data_objet)
+    .enter().append("svg:g")
+      .attr("fill", function (d, i) { return color(i); })
+      .attr("transform", function (d, i) { return "translate(" + x1(i) + ")"; });
+
+  var groups = series.selectAll("rect")
+      .data(Object) // The second dimension in the two-dimensional data array
+    .enter().append("svg:rect")
+        .attr("x", 0)
+        .attr("y", function (d) { return h-85 - y(d); })
+        .attr("width", x1.rangeBand())
+        .attr("height", y)
+        .attr("transform", function (d, i) { return "translate(" + x0(i) + ")"; });
+	
+	
+	
+var legend_keys = ["Promedio del Grupo", "Canción"]
+
+var lineLegend = vis.selectAll(".lineLegend").data(legend_keys)
+    .enter().append("g")
+    .attr("class","lineLegend")
+    .attr("transform", function (d,i) {
+            return "translate(" + 5 + "," + (i*10)+")";
+        });
+
+lineLegend.append("text").text(function (d) {return d;})
+    .attr("transform", "translate(15,15)"); //align texts with boxes
+
+lineLegend.append("rect")
+    .attr("fill", function (d, i) {return color(i); })
+    .attr("width", 10).attr("height", 10)
+	.attr("transform", function (d,i) {
+            return "translate( 0,5)";
+        });
+
+	
+}
+		
+</script>
+
+
+</body>
+</html>

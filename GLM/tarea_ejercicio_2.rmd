@@ -1,0 +1,408 @@
+---
+title: "Tarea GLM"
+author: "Armando Olivares"
+date: "8 de febrero de 2018"
+output: html_document
+---
+
+
+
+
+
+El set de datos windscreen.csv que se proporciona contiene datos ﬁcticios relativos al año 2011 de una aseguradora de automóviles. Concretamente, se trata de una tabla donde cada observación corresponde a un asegurado, donde tienes información propia del asegurado (edad, ciudad, tipo de coche, etc.), el coste total por siniestros relativos a las lunas de su coche (INCURR_COST), el número de siniestros de este tipo que ha sufrido (N_CLAIMS) y su exposición (EXPOSURE), es decir, la fracción del año que el sujeto ha estado asegurado. 
+
+
+```{r}
+
+suppressWarnings(suppressMessages(library(tidyverse)))
+suppressWarnings(suppressMessages(library(caret)))
+suppressWarnings(suppressMessages(library(insuranceData)))
+suppressWarnings(suppressMessages(library(fitdistrplus)))
+suppressWarnings(suppressMessages(library(mice)))
+suppressWarnings(suppressMessages(library(VIM)))
+suppressWarnings(suppressMessages(library(modeest)))
+suppressWarnings(suppressMessages(library(ggplot2)))
+
+```
+
+
+
+### Cargamos Nuestros Datos
+```{r}
+windscren <- read.csv("windscreen.csv", sep = ";", na.strings = "")
+set.seed(4)
+
+```
+
+
+### Análisis Preliminar
+
+```{r}
+str(windscren)
+```
+
+
+Notamos que tenemos 24.919 observaciones con 22 Variables, de las cuales 5 están clasificadas como factor y el resto son variables númericas.
+
+```{r}
+summary(windscren)
+```
+
+
+
+Realiza un leve análisis exploratorio del set de datos, para formular las hipótesis que consideres oportunas acerca de la relación entre los costes generados porcada cliente y el resto de variables.
+
+### Primero Observamos la distribucion de NA's:
+```{r}
+# Distribución de NA's
+
+md.pattern(windscren)
+```
+
+```{r}
+sapply(windscren, function(x) sum(is.na(x)))
+```
+
+
+Imputaremos a la moda las observaciones que tengan NA
+
+```{r}
+windscren$DES_ZONE2[is.na(windscren$DES_ZONE2)] <- "Rural"
+windscren$DES_ZONE[is.na(windscren$DES_ZONE)] <- "Capital"
+windscren$GENDER[(windscren$GENDER == 8)] <- 1
+windscren$AGE_DRIVER[(windscren$AGE_DRIVER == 9999)] <- unique(windscren$AGE_DRIVER)[which.max(tabulate(match(windscren$AGE_DRIVER, unique(windscren$AGE_DRIVER))))]
+windscren$AGE_LICENSE[(windscren$AGE_LICENSE == 9999)] <- unique(windscren$AGE_LICENSE)[which.max(tabulate(match(windscren$AGE_LICENSE, unique(windscren$AGE_LICENSE))))]
+
+windscren$AGE_VEHICLE[(windscren$AGE_VEHICLE == 9999)] <- unique(windscren$AGE_VEHICLE)[which.max(tabulate(match(windscren$AGE_VEHICLE, unique(windscren$AGE_VEHICLE))))]
+windscren$AGE_ADD_DRIVER[(windscren$AGE_ADD_DRIVER == 9999)] <- unique(windscren$AGE_ADD_DRIVER)[which.max(tabulate(match(windscren$AGE_ADD_DRIVER, unique(windscren$AGE_ADD_DRIVER))))]
+
+```
+
+
+
+```{r}
+summary(windscren)
+```
+
+
+
+### Examinaremos La Distribución de las variables:
+
+Para la Variable ** N_claims **:
+
+```{r}
+barplot((table(windscren$N_CLAIMS)))
+```
+
+Es díficil de interpretar por lo que tomaremos el ** log de las observaciones **:
+
+
+```{r}
+barplot(log(table(windscren$N_CLAIMS)))
+```
+
+De lo que extraemos que el número de reclamos para el año 2011, vas desde 0-3.
+
+
+Para la Variable ** Gender **:
+```{r}
+barplot(table(windscren$GENDER))
+```
+
+
+Para la Variable ** Dess_zone 2 **:
+```{r}
+barplot(table(windscren$DES_ZONE2))
+```
+
+
+Para las Variables Continuas, graficaremos las densidades:
+
+```{r}
+plot(density(windscren$INCURR_COST))
+```
+
+
+```{r}
+plot(density(windscren$EXPOSURE))
+```
+
+
+
+
+
+```{r}
+
+plot(density(windscren$EARNED_PREMIUM))
+
+```
+
+
+
+
+
+Trataremos de establecer una relación entre los costes generados por cada cliente y el resto de variables
+
+partimos del hecho que a mayor número de siniestro mayor es el coste generado a la aseguradora.
+
+Primero la variable **Incurred_cost  vs Age_driver** 
+
+Para ello creamos una **nueva** variable  a fin de analizar por **intervalos de edad**
+```{r}
+
+windscren$Age_factor <-  cut(windscren$AGE_DRIVER, breaks=c(0, 20, 30,45, 50, 60, Inf),  sep="")
+
+ggplot(windscren, aes(x=as.factor(Age_factor), y=INCURR_COST)) + 
+  geom_violin()
+```
+
+
+```{r}
+ggplot(windscren, aes(x=as.factor(Age_factor), y=N_CLAIMS)) + 
+  geom_violin()
+```
+
+
+Observamos que la edad puede ser un factor que incluya en los costos, ya son según vemos existen grupos con mayor número de accidentes por año (los más jovenes y los más ancianos).
+
+
+
+
+```{r}
+
+table(windscren$N_CLAIMS, windscren$Age_factor)
+
+```
+
+
+
+
+```{r}
+
+ggplot(windscren, aes(x=as.factor(N_CLAIMS), y=EXPOSURE)) + 
+  geom_boxplot()
+```
+
+
+
+**Añadimos** una nueva **variable** para discriminar por intervalo de tiempo que el sujeto ha estado asegurado
+ 
+```{r}
+
+windscren$tiempo_fracc <-  cut(windscren$EXPOSURE, breaks=c(0, 0.25, 0.5, 0.75, Inf),  sep="")
+table(windscren$N_CLAIMS, windscren$tiempo_fracc)
+
+```
+
+** Observamos que la mayoría de los siniestros ocurren en sujetos que han estado asegurado por casi todo el año.** 
+
+
+Revisamos ahora por genero
+
+```{r}
+table(windscren$N_CLAIMS, windscren$GENDER)
+```
+Lo sujeto que más han incurrido en siniestros son los del genero 1(¿tal vez hombres?)
+
+
+Revisamos ahora el costo  ó valor del Vehículo
+
+```{r}
+ggplot(windscren, aes(x=as.factor(N_CLAIMS), y=VALUE_VEHICLE)) + 
+  geom_boxplot()+ scale_y_continuous(limits = c(-1, 1e5))
+```
+
+
+
+En promedio **no** parece haber mucha diferencia entre el valor del coche y número de accidentes, aunque claramente si el valor del coche es alto también lo será el costo generado a la empresa por razones obvias.
+
+
+
+Revisamos ahora la fuerza del vehículo, expresado en HP
+```{r}
+table(windscren$N_CLAIMS, windscren$HPOWER)
+```
+
+```{r}
+ggplot(windscren, aes(x=as.factor(HPOWER), y=INCURR_COST)) + 
+  geom_violin()
+```
+
+Se observa que los coches con HP entre 6-9 son los ocasionan más gasto a la aseguradora.
+
+Revisemos la Variable **antpol**
+
+```{r}
+
+```
+
+
+De lo visto anteriormente podemos decir que los clientes que tienen entre 25-35 años ó entre 50-60 años, cuyo genero es 1 (¿?), la ciudad, la zona y los que tienen más tiempo asegurados podrían incurrir en más accidentes/siniestros ocasionando mayor gasto a la aseguradora. 
+
+
+
+#### b) Determina la prima pura conservadora desde el punto de vista de la aseguradora
+
+Está se determinará como la media de costo incurrido el año anterior(en este caso el año anterior es el 2011)
+por lo que:
+
+
+```{r}
+
+mean(windscren$INCURR_COST)/mean(windscren$EXPOSURE)
+
+```
+#### Este valor: **14.3** es la prima conservadora para cada cliente
+
+
+
+
+
+
+####  Ajusta (y optimiza) algún modelo más soﬁsticado para determinar la prima pura más justa para cada asegurado, y compara su rendimiento con el que ofrecería esa prima pura conservadora (es decir, determina, de la forma que consideres oportuna, si el modelo que has ajustado es más justo que el más conservador). 
+
+
+
+** Coste = Número de siniestros × Coste medio por siniestro. **
+
+
+
+
+```{r}
+
+sum(windscren$INCURR_COST== 0)
+sum(windscren$N_CLAIMS==0)
+
+windscren[windscren$INCURR_COST == 0 & windscren$N_CLAIMS !=0, ]$N_CLAIMS <- 0
+
+
+intrain<-createDataPartition(y=windscren$YEAR, p=0.8,list=FALSE)
+train_windscren<-windscren[intrain,]
+test_windscren<-windscren[-intrain,]
+
+
+
+train_control<- trainControl(method="cv", number=10, savePredictions = TRUE)
+
+
+
+
+suppressWarnings(model.n_claims <- train(N_CLAIMS/EXPOSURE ~ GENDER + AGE_DRIVER + HPOWER + CITIES+ AGE_LICENSE  ,
+                        data = train_windscren,
+                        trControl = train_control,
+                        method = 'glm',
+                        family = poisson(link = 'log'),
+                        na.action = na.omit) )
+
+summary(model.n_claims)
+
+
+data_nonzero = train_windscren[train_windscren$INCURR_COST>0, ]
+suppressWarnings(model.claimcost <- train(INCURR_COST/N_CLAIMS ~ GENDER + AGE_DRIVER + HPOWER + DES_ZONE +DES_ZONE2,
+                         data = data_nonzero,
+                         trControl = train_control,
+                         method = 'glm',
+                         family = Gamma(link = 'log'),
+                         weights = EXPOSURE,
+                         na.action = na.omit))
+
+summary(model.claimcost)
+```
+
+
+### Revisamos con el test de ANOVA si le podemos agregar otra variable al Modelo, por ejemplo **CITIES**
+```{r}
+suppressWarnings(model.n_claims2 <- train(N_CLAIMS/EXPOSURE ~ GENDER + AGE_DRIVER + HPOWER + AGE_LICENSE  ,
+                        data = train_windscren,
+                        trControl = train_control,
+                        method = 'glm',
+                        family = poisson(link = 'log'),
+                        na.action = na.omit) ) 
+anova(model.n_claims2$finalModel, model.n_claims$finalModel, test = "Chisq")
+
+```
+Lo Cuál nos indica que de acuerdo al p-valor debemos rechazar al modelo donde incluimos **CITIES** 
+
+
+### Con los modelos obtenidos:
+Coste = Número de siniestros × Coste medio por siniestro.
+El número de siniestros se modela mediante un GLM de tipo Poisson. El coste medio por siniestro se modela mediante un GLM de tipo Gamma. La credibilidad que se otorga a cada una de las observaciones se pondera en base a su exposición (la fracción del año que ha transcurrido desde que fue contratada la póliza).
+
+
+#### Procedemos a Predecir el *N_CLAIMS* y el *INCURR_COST*
+```{r}
+
+n_claim_pred <- predict(model.n_claims2, test_windscren[,c("GENDER", "AGE_DRIVER", "HPOWER", "AGE_LICENSE")])
+
+```
+
+```{r}
+head(test_windscren$N_CLAIMS)
+```
+
+```{r}
+head(n_claim_pred)
+mean(n_claim_pred)
+mean(test_windscren$N_CLAIMS)
+```
+
+
+
+
+Para el * INCURR_COST *
+```{r}
+
+cost_pred <- predict(model.claimcost, test_windscren[,c("GENDER", "AGE_DRIVER", "HPOWER", "DES_ZONE", "DES_ZONE2")])
+
+
+```
+
+Observando las Medias tenemos que: 
+
+Para el Modelo:
+```{r}
+mean(cost_pred*n_claim_pred)
+```
+
+Para la Predicción Conservadora:
+```{r}
+mean(test_windscren$INCURR_COST)/mean(test_windscren$EXPOSURE)
+```
+
+#### La estimación de la prima por nuestro modelo se acerca mucho al valor calculado de forma conservadora.
+
+### Por último tomaremos el ratio entre la prima predicha y la prima conservadora, a  fin de analizar mejor cada individuo:
+
+```{r}
+ratio_primas <- cost_pred*n_claim_pred/(mean(test_windscren$INCURR_COST)/mean(test_windscren$EXPOSURE))
+```
+
+
+```{r}
+test_windscren["ratio"] <- ratio_primas
+```
+
+#### Observamos nuestro ajuste
+
+```{r}
+head(test_windscren)
+```
+
+```{r}
+tail(test_windscren)
+```
+
+
+```{r}
+tail(test_windscren[test_windscren$N_CLAIMS >1,])
+```
+
+Se puede Observar como nuestro modelo, de manera general le asigna una mayor primaa los individuos que han incurrido en más costos, por ejemplo **al individuo 12884** el cuál como se observa generó un costo de **1019.32** y ahora el modelo la asigna cerca de **1.6 veces la prima conservadora**, es un modelo un poco más justo que solo asignar la prima conservadora como tasa unica para todos.
+
+
+### En Resumen: 
+
+ 1.  los modelos lineales generalizados representan  los **métodos estándar**  para la prediccion/ajuste de precios del negocio asegurador, Sin embargo, requieren un gran conocimiento sobre la estructura de los datos y del negocio. 
+2. Mucha de la capacidad predictiva de un modelo de GLM se debe a la opinión ajustes de expertos como se ha podido observar, es decir las variables, los hiperparámetros que deben ser ajustados y estudiados cuidadosamente para no sesgar nuestro modelo.
+3. Observamos según nuestro datos que es mejor realizar una estimación basado en modelos, que realizar una estimacion conservadora, y adémas mucho más competitiva.
+4. Por últimos a pesar que nuestro modelos funciona razonablamente bien, se puede aplicar modelos más avanzados y realizar técnicas de balanceo de los datos.

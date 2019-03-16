@@ -1,0 +1,33 @@
+# -*- coding: iso-8859-1 -*-
+import numpy as np
+import os, sys
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.model_selection import cross_val_score, KFold, ShuffleSplit
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix
+from sklearn import decomposition
+
+
+###################################################################### boxplots, histogramas, corrs
+
+def plot_2hist(x_pos, x_neg, n_bins=11, title='', label_pos='Pos', label_neg='Neg', normed=0):
+    """Dibuja histogramas clases positiva y negativa.
+    
+    Args: 
+        x_pos: array float con valores de la clase positiva.
+        x_neg: array float con valores de la clase negativa.
+        n_bins: número de bins para los histogramas.
+        title: título de la figura.
+        label_pos, label_neg: labels de los histogramas positivo y negativo.
+        normed: flag de normalización de histogramas.
+        
+    """
+    bins = n_bins
+    _ = plt.hist(x_pos, bins, normed = normed, alpha=0.5, label=label_pos)    
+    _ = plt.hist(x_neg, bins, normed = normed, alpha=0.5, label=label_neg, color='r')
+    plt.title(title)
+    plt.legend(loc='best')  

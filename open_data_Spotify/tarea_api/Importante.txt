@@ -1,0 +1,12 @@
+Se incluyen:
+En la carpeta "Archivo y codigo": los archivos .py y los archivos .csv utilizados para obtener/analizar los datos
+En la carpeta "web" esta todo el directorios django con los archivos necesarios, html, javascript, .py, .csv y .json para ejecutar la aplicacion
+en un servidor web que soporte django
+
+
+Por último para ver la aplicacion en funcionamiento ir a la directorio donde este la carpeta descomprimida,
+ir al web-> open_data, una ver allí abrir una terminal desde el directorios y ejecutar "python manage.py runserver"
+A partir de ahí podrás acceder a la pagina a tráves del link: "http://localhost:8000/testapi/"
+
+También subiré la app a la siguiente url: "http://armand200.pythonanywhere.com/" que es un servidor python con posibilidad de cuenta free
+

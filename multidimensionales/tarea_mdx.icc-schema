@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<schemaFactory revisionNumber="183">
+    <schemaDefinition name="tarea_mdx" description="" group="tarea" loadOnStartup="false">
+        <activateIncrementalLoad>false</activateIncrementalLoad>
+        <useUnknownMembersInFacts>true</useUnknownMembersInFacts>
+        <autoCleanUpTableColumns>false</autoCleanUpTableColumns>
+        <useFactPartitioning>false</useFactPartitioning>
+        <storagePolicy>DEFAULT</storagePolicy>
+        <hierarchyUniqueNameStyle>IncludeDimensionName</hierarchyUniqueNameStyle>
+        <jdbcDS driverType="MYSQL" serverName="localhost" portNumber="3306" dbName="tarea1_mdx" user="root" dontAddQuotes="false" password="☂mkt86KdXSV/50awKi+Yukg==" name="tarea1_mdx">
+            <jdbcDatatable fetchSize="1000" tableName="comunidad_autonoma" rowLimit="-1" id="bb061dac-812d-4d3d-bdb5-71100a3b9edc">
+                <column name="id" tableType="VARCHAR(2)" type="STRING" selected="true" primaryKey="true"/>
+                <column name="ccaa" tableType="VARCHAR(255)" type="STRING" selected="true" primaryKey="false"/>
+                <column name="provincia" tableType="VARCHAR(255)" type="STRING" selected="true" primaryKey="false"/>
+                <column name="id_provincia" tableType="VARCHAR(3)" type="STRING" selected="true" primaryKey="true"/>
+            </jdbcDatatable>
+            <jdbcDatatable fetchSize="1000" tableName="datos_accidentes" rowLimit="-1" id="ab7c32f5-8ff1-4553-a0fe-c553276145df">
+                <column name="fecha_ano" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+                <column name="id_ccaa" tableType="VARCHAR(2)" type="STRING" selected="true" primaryKey="false"/>
+                <column name="id_provincia" tableType="VARCHAR(3)" type="STRING" selected="true" primaryKey="false"/>
+                <column name="id_via" tableType="VARCHAR(1)" type="STRING" selected="true" primaryKey="false"/>
+                <column name="accidentes_con_victimas" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+                <column name="accidentes_mortales_30_dias" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+                <column name="fallecidos" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+                <column name="heridos_hospitalizados" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+                <column name="heridos_no_hospitalizados" tableType="INTEGER" type="INTEGER" selected="true" primaryKey="false"/>
+            </jdbcDatatable>
+            <jdbcDatatable fetchSize="1000" tableName="via" rowLimit="-1" id="3f5467e9-765d-4c49-bfc8-de70c0631bf4">
+                <column name="id" tableType="VARCHAR(1)" type="STRING" selected="true" primaryKey="true"/>
+                <column name="tipo_via" tableType="VARCHAR(255)" type="STRING" selected="true" primaryKey="false"/>
+            </jdbcDatatable>
+        </jdbcDS>
+        <multiLevelDimension dataTableId="bb061dac-812d-4d3d-bdb5-71100a3b9edc" isTimeDimension="false" isDefaultTimeDimension="false" isIndexingByRange="false" unknownMemberName="" id="2e40bf0e-e042-45b4-bb71-d548452fb990" name="region">
+            <multiLevelHierarchy hasAllLevel="true" allLevelName="All-L" allMemberName="All-M" name="region" isDefault="true" defaultMemberName="">
+                <factAggregationType>MEMBER_AND_ANCESTORS</factAggregationType>
+                <level name="ccaa" nameUnique="true" nameUniqueInParent="false" keyUnique="true" ignoreNameCollision="false">
+                    <column name="id"/>
+                    <nameCol name="ccaa"/>
+                    <orderType>NONE</orderType>
+                    <orderKind>ASC</orderKind>
+                </level>
+                <level name="provincia" nameUnique="true" nameUniqueInParent="false" keyUnique="true" ignoreNameCollision="false">
+                    <column name="id_provincia"/>
+                    <nameCol name="provincia"/>
+                    <orderType>NONE</orderType>
+                    <orderKind>ASC</orderKind>
+                </level>
+            </multiLevelHierarchy>
+        </multiLevelDimension>
+        <multiLevelDimension dataTableId="3f5467e9-765d-4c49-bfc8-de70c0631bf4" isTimeDimension="false" isDefaultTimeDimension="false" isIndexingByRange="false" unknownMemberName="" id="549c7d1a-58da-4ae7-86f6-8b5b4fb22929" name="via">
+            <multiLevelHierarchy hasAllLevel="true" allLevelName="All-L" allMemberName="All-M" name="via" isDefault="true">
+                <level name="via" nameUnique="true" nameUniqueInParent="false" keyUnique="true" ignoreNameCollision="false">
+                    <column name="id"/>
+                    <nameCol name="tipo_via"/>
+                    <orderType>NONE</orderType>
+                    <orderKind>ASC</orderKind>
+                </level>
+            </multiLevelHierarchy>
+        </multiLevelDimension>
+        <multiLevelDimension dataTableId="ab7c32f5-8ff1-4553-a0fe-c553276145df" isTimeDimension="false" isDefaultTimeDimension="false" isIndexingByRange="false" unknownMemberName="" id="04fabb16-27a4-4a1b-a88b-67927533d553" name="year">
+            <multiLevelHierarchy hasAllLevel="true" allLevelName="All-L" allMemberName="All-M" name="year" isDefault="true">
+                <level name="year" nameUnique="true" nameUniqueInParent="false" keyUnique="true" ignoreNameCollision="false">
+                    <nameCol name="fecha_ano"/>
+                    <orderType>NONE</orderType>
+                    <orderKind>ASC</orderKind>
+                </level>
+            </multiLevelHierarchy>
+        </multiLevelDimension>
+        <cube id="ab9347d2-252a-4c60-9b40-105c55b7fd19" name="accidentes" description="Cantidad de Accidentes en España">
+            <defaultFacts measureGroupName="accidentes" partitioningLevelName="" newGeneration="true" dataTableId="ab7c32f5-8ff1-4553-a0fe-c553276145df" aggregateDataSourceFacts="false" unresolvedRowsBehavior="ERROR">
+                <rowFactAggregationType>ADD_ROW</rowFactAggregationType>
+                <measure name="accidentes_con_victimas" aggregationType="SUM">
+                    <rollupHierarchy></rollupHierarchy>
+                    <dataColumn name="accidentes_con_victimas"/>
+                    <cellProperties></cellProperties>
+                    <emptyIsZero>true</emptyIsZero>
+                </measure>
+                <measure name="accidentes_mortales_30_dias" aggregationType="SUM">
+                    <rollupHierarchy></rollupHierarchy>
+                    <dataColumn name="accidentes_mortales_30_dias"/>
+                    <cellProperties></cellProperties>
+                    <emptyIsZero>true</emptyIsZero>
+                </measure>
+                <measure name="fallecidos" aggregationType="SUM">
+                    <rollupHierarchy></rollupHierarchy>
+                    <dataColumn name="fallecidos"/>
+                    <cellProperties></cellProperties>
+                    <emptyIsZero>true</emptyIsZero>
+                </measure>
+                <measure name="heridos_hospitalizados" aggregationType="SUM">
+                    <rollupHierarchy></rollupHierarchy>
+                    <dataColumn name="heridos_hospitalizados"/>
+                    <cellProperties></cellProperties>
+                    <emptyIsZero>true</emptyIsZero>
+                </measure>
+                <measure name="heridos_no_hospitalizados" aggregationType="SUM">
+                    <rollupHierarchy></rollupHierarchy>
+                    <dataColumn name="heridos_no_hospitalizados"/>
+                    <cellProperties></cellProperties>
+                    <emptyIsZero>true</emptyIsZero>
+                </measure>
+                <links dimensionId="2e40bf0e-e042-45b4-bb71-d548452fb990">
+                    <viewLinks type="ALL_LEVELS">
+                        <toColumns name="id_provincia"/>
+                    </viewLinks>
+                </links>
+                <links dimensionId="549c7d1a-58da-4ae7-86f6-8b5b4fb22929">
+                    <viewLinks type="LAST_LEVEL">
+                        <toColumns name="id_via"/>
+                    </viewLinks>
+                </links>
+                <links dimensionId="04fabb16-27a4-4a1b-a88b-67927533d553">
+                    <viewLinks type="LAST_LEVEL">
+                        <toColumns name="fecha_ano"/>
+                    </viewLinks>
+                </links>
+            </defaultFacts>
+        </cube>
+        <localization enabled="false"/>
+        <script>
+            <content>-- 
+-- Drop all calc. members, sets and functions declared at schema/cube levels 
+-- 
+
+DROP *
+
+</content>
+        </script>
+        <diagramPosition tableId="3f5467e9-765d-4c49-bfc8-de70c0631bf4" left="20" top="20"/>
+        <diagramPosition tableId="ab7c32f5-8ff1-4553-a0fe-c553276145df" left="164" top="20"/>
+        <diagramPosition tableId="bb061dac-812d-4d3d-bdb5-71100a3b9edc" left="428" top="20"/>
+    </schemaDefinition>
+</schemaFactory>

@@ -1,0 +1,110 @@
+﻿-------------Query 1---------------------------------------------------
+
+SELECT [year] ON COLUMNS,
+ [region].provincia ON ROWS 
+FROM accidentes
+
+
+
+
+
+-------------Query 2---------------------------------------------------
+
+SELECT  [Measures].[fallecidos] ON COLUMNS,
+[region].[region].[ccaa] ON ROWS
+FROM accidentes
+WHERE ([year].[2014])
+
+
+
+
+
+-------------Query 3---------------------------------------------------
+
+SELECT  [Measures].members ON COLUMNS,
+{[region].[region].[provincia].[Cádiz]  :[region].[region].[provincia].[Jaén]}  ON ROWS
+FROM accidentes
+WHERE ([year].[2015], [via].[Urbana])
+
+
+
+
+
+-------------Query 4---------------------------------------------------
+
+WITH MEMBER [Measures].[Fallecidos_x_accidentes] AS 'Avg(Measures.fallecidos)/Measures.accidentes_con_victimas' 
+SELECT  [Measures].[Fallecidos_x_accidentes] ON COLUMNS,
+ EXCEPT([region].[provincia],[region].[Andalucía].Children ) ON ROWS
+FROM accidentes
+WHERE ([year].[2014], [via].[Interurbana])
+
+
+
+-------------Query 5---------------------------------------------------
+
+WITH MEMBER [Measures].[sum_Fallecidos_Total]
+AS ' sum([region].[region].[provincia].members, [Measures].fallecidos)' 
+MEMBER [Measures].[%_Fallecidos_Total] 
+AS ' sum([region].[region], [Measures].fallecidos/[Measures].[sum_Fallecidos_Total])' ,format_string="percent"
+MEMBER [Measures].[%_Fallecidos_padre] 
+AS ' sum([region].[region].currentmember, [Measures].fallecidos)/iif(sum([region].[region].parent, [Measures].fallecidos)=0, sum([region].[region].[provincia].members, [Measures].fallecidos),sum([region].[region].parent, [Measures].fallecidos))', format_string="percent" 
+SELECT  {[Measures].[%_Fallecidos_Total], [Measures].[%_Fallecidos_padre]} ON COLUMNS,
+[region] ON ROWS
+FROM accidentes
+WHERE [year].[2015]
+
+
+
+-------------Query 6---------------------------------------------------
+
+WITH MEMBER [Measures].[fallecidos_anterior]
+AS '(Measures.fallecidos ,[year].[2014], [region].[region].[ccaa].[Comunidad Valenciana])' 
+MEMBER [Measures].[accidentes_anterior] 
+AS '(Measures.accidentes_con_victimas ,[year].[2014], [region].[region].[ccaa].[Comunidad Valenciana])' 
+SELECT  {[Measures].fallecidos, [Measures].[fallecidos_anterior], [Measures].[accidentes_con_victimas],[Measures].[accidentes_anterior] }   ON COLUMNS,
+ [via].[via] ON ROWS
+FROM accidentes
+WHERE ([year].[2015], [region].[region].[ccaa].[Comunidad Valenciana])
+
+
+
+
+
+-------------Query 7---------------------------------------------------
+
+SELECT  {[Measures].heridos_no_hospitalizados }   ON COLUMNS,
+  FILTER([region].[provincia].members, heridos_no_hospitalizados > 5000) ON ROWS
+FROM accidentes
+WHERE [year].[2014]
+
+
+
+
+-------------Query 8---------------------------------------------------
+
+SELECT  {[Measures].accidentes_con_victimas, [Measures].fallecidos }   ON COLUMNS,
+ ([year].[year],[via]) ON ROWS
+FROM accidentes
+WHERE [region].[region].[ccaa].[Castilla y León]
+
+
+-------------Query 9---------------------------------------------------
+
+SELECT  [Measures].heridos_hospitalizados  ON COLUMNS,
+ORDER([region].[provincia].members, [Measures].heridos_hospitalizados, BDESC)ON ROWS
+FROM accidentes
+WHERE [year].[2015]
+
+
+
+-------------Query 10---------------------------------------------------
+
+WITH MEMBER [Measures].[fallecidos_Inter] 
+AS '(Measures.fallecidos ,[via].[Interurbana])' 
+MEMBER [Measures].[fallecidos_Urbanas] 
+AS '(Measures.fallecidos ,[via].[Urbana])' 
+SELECT  {[Measures].fallecidos_Inter, [Measures].fallecidos_Urbanas }  ON COLUMNS,
+[region].[ccaa].[Galicia].Children ON ROWS
+FROM accidentes
+WHERE [year].[2015]
+

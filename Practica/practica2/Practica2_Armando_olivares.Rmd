@@ -1,0 +1,241 @@
+---
+title: "Herramientas de Análisis de Grafos - Practica 2"
+author: "Armando Olivares"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(igraph)
+library(data.table)
+```
+
+
+Aparte del código, se pide, por favor, la explicación de las conclusiones que se pueden sacar a través de los análisis realizados. 
+
+<span style="color:blue">Es obligatorio que estas explicaciones estén en color azul.</span>
+
+La práctica se realizará de manera individual, no os olvidéis de poner vuestro nombre al inicio de este documento y también en el nombre del fichero (Practica1_AlejandroLlorente.Rmd).
+
+## Carga de datos
+
+En este apartaddo cargaremos el fichero "mathoverflow-ints.txt" y haremos un primer procesamiento para conseguir un grafo simplificado y con pesos, que representarán el número de veces que interaccionan dos usuarios. Para ello, debéis utilizar las siguientes funciones:
+
+- graph.data.frame
+- set.edge.attribute
+- simplify
+
+Es recomendable crear dos objetos, uno con las interacciones originales y otro con el grafo simplificado.
+
+
+
+
+```{r}
+
+datos <- fread("../datos_practicas/mathoverflow-ints.txt")
+df_aux <- datos
+colnames(datos)<- c("origen", "destino", "ts", "tipo")
+g <- graph.data.frame(datos, directed = T)
+g <- set.edge.attribute(g, "weight", value=1)### asigno los pesos de acuerdo a las interaciones del par usurio
+g_simple <- simplify(g, remove.multiple = T, edge.attr.comb = list(weight='sum'))
+```
+  
+
+
+## Análisis de centralidad
+
+En esta sección, vamos a analizar los nodos más influyentes por su posición estructural en la red, es decir, por su centralidad. Como vimos en las clases de teoría, existen diferentes maneras de hacerlo, pero las tres principales son:
+
+- Grado del nodo
+- Closeness del nodo
+- Betweenness del nodo
+
+Calcular estas tres métricas en la red que se construye con los datos "a2q". Realizar un análisis comparativo de las tres métricas (grado vs closeness, grado vs betweeness y closeness vs betweeness). ¿Qué diferencias hay? 
+
+```{r}
+
+datos <- datos[datos$tipo == 'a2q',]
+g <- graph.data.frame(datos, directed = T)
+g <- set.edge.attribute((g), "weight", value=1)
+g2 <- simplify(g, remove.multiple = T, edge.attr.comb = list(weight = "sum"))
+degs <- degree(g2)
+clos <- closeness(g2,mode = "all")
+bets <- betweenness(g2, directed = F)
+plot(degs,bets, main = "degs vs bets")
+plot( degs,(clos), col="blue", main = "deg vs clos")
+plot( clos,bets, col="red", main = "clos  vs bets")
+
+
+
+```
+
+
+
+<span style="color:blue">de la grafica bets vs degs se extrae que, como es de esperar, los nodos con mayor degree son los nodos con mayor bets, que representa que de bien un nodo conecta a los demás, por otro lado no parece habr gran variación en el incremento de degree y el closeness es un grafo muy denso</span>
+
+
+
+<span style="color:blue">Los Valores máximos:</span>
+```{r}
+## El Nodo con mayor grado
+which.max(degs)
+## El valor del Mayor Grado
+max(degs)
+## El Nodo con mayor clossenes
+which.max(clos)
+## El valor:
+max(clos)
+## El Nodo con mayor betweeness
+which.max(bets)
+## El valor:
+max(bets)
+
+```
+
+
+## y analizando las distribuciones:
+```{r}
+library(ggplot2)
+df_metrics <- as.data.frame(cbind(cbind(degs,clos),bets))
+ggplot(df_metrics)+
+  geom_histogram(aes(x=log(degs+1)),alpha=.3, colour= '#CD661D', fill = '#CD661D')+
+  geom_histogram(aes(x=log(clos+1)),alpha=.3, colour= '#556b2f', fill = '#556b2f')+
+  labs(title="degs vs clos")
+
+ggplot(df_metrics)+
+  geom_histogram(aes(x=log(clos+1)),alpha=.3, colour= '#CD661D', fill = '#CD661D')+
+  geom_histogram(aes(x=log(bets+1)),alpha=.3, colour= '#556b2f', fill= '#556b2f')+
+   labs(title="clos vs bets")
+
+ggplot(df_metrics)+
+  geom_histogram(aes(x=log(degs+1)),alpha=.3, colour= '#CD661D', fill = '#CD661D')+
+  geom_histogram(aes(x=log(bets+1)),alpha=.3, colour= '#556b2f', fill= '#556b2f')+
+   labs(title="degs vs bets")
+```
+
+
+
+
+<span style="color:blue">Se observa de las distribuciones que existen muchos nodos donde se concentra poco degree y poco closenes(cercanías) lo que implica una red mur densa, ademas de la distribucion de betweness tenemos muchos nodos que sirven de enlaces hacia otros nodos </span>
+
+
+## Análisis y visualización de comunidades
+
+En este apartado, vamos a calcular las comunidades del grafo. Para ello utilizaremos el grafo simplificado del apartado anterior y seguiremos los siguientes pasos:
+
+- Crearemos el subgrafo inducido por aquellos enlaces con peso mayor que 8.
+- Nos quedaremos el subgrafo de la componente conexa mayor.
+- Calcularemos las comunidades con el algoritmo fastgreedy.
+- Visualizaremos el grafo con las siguientes características: color dependiendo de la comunidad, tamaño del nodo proporcional a su grado en el subgrafo y enlaces curvos.
+
+
+```{r, message=FALSE, warning=FALSE}
+g_aux <- subgraph.edges(g2, eids=which(E(g2)$weight > 8))
+g_aux2 <- g_aux
+css <- clusters(g_aux2, mode = "weak") 
+table(css$membership)
+# Seleccionamos el índice de la componente más grande
+imax <- which.max(css$csize)
+
+# Seleccionamos los nodos para el nuevo grafo
+gg <- induced_subgraph(graph = g_aux2,
+                       vids = (css$membership == imax))
+summary(gg)
+# Deteción de comunidades
+comms1 <- fastgreedy.community(as.undirected(gg))
+colspalette <- sample(rainbow(max(comms1$membership)))
+vsize <- 10*log(degree(as.undirected(gg)))
+ws <- ifelse(crossing(comms1,gg),1,10)
+deg2 <- degree(as.undirected(gg))
+set.seed(5)
+par(mar = rep(0.1, 4)) 
+ll <- layout_with_fr(gg) 
+plot(comms1,gg, 
+     layout = ll, 
+     vertex.label=ifelse(deg2>3, names(deg2), ""), 
+     edge.curved = T, 
+     vertex.size = vsize,
+     vertex.color=colspalette[comms1$membership],
+     edge.arrow.size=0
+     )
+
+ 
+
+
+```
+
+<span style="color:blue">Como se observa el algoritmo nos ha detectado 8 comunidades</span>
+
+## Análisis de la centralidad por comunidades
+
+En los apartados anteriores, hemos calculado qué nodos eran los que tenían mayor centralidad en la red, es decir, los que tienen una mayor importancia estructural. En esta ocasión tenemos que calcular qué nodos son los que mayor centralidad tienen si solamente tenemos en cuenta la comunidad a la que pertenecen y compararlo con la centralidad que tienen en la red total (subgrafo de enlaces con más de 8 interacciones). ¿Qué diferencias hay? Analizarlo y explicarlo en este documento.
+
+
+```{r}
+sizes(comms1)
+
+```
+
+
+```{r}
+no_comm <- length(sizes(comms1))
+
+
+df_res <- data.frame(community = 1:no_comm, 
+                  members = rep(x = NA,no_comm),
+                  max_deg_node = rep(x = NA,no_comm),
+                  max_deg = rep(x = NA,no_comm),
+                  max_clos_node = rep(x = NA,no_comm),
+                  max_clos = rep(x = NA,no_comm),
+                  max_bets_node = rep(x = NA,no_comm),
+                  max_bets = rep(x = NA,no_comm),
+                  nodo_central_deg = rep(X=NA, no_comm),
+                  nodo_central_clos = rep(X=NA, no_comm),
+                  nodo_central_bets = rep(X=NA, no_comm),
+                  nodo_maximo_deg = rep(X=NA, no_comm),
+                  nodo_maximo_clos = rep(X=NA, no_comm),
+                  nodo_maximo_bets = rep(X=NA, no_comm)
+                  
+                  )
+```
+
+
+
+
+```{r}
+for (g in(unique(membership(comms1)))) {
+    subg1<-induced.subgraph(as.undirected(g_aux), which(membership(comms1)==g)) 
+    degs_sub <- degree(subg1,mode = "all")
+    clos_sub <- closeness(subg1,mode = "all")
+    bets_sub <- betweenness(subg1)
+    df_res$members[g] <- vcount(subg1)
+    df_res$max_deg_node[g] <- names(which.max(degs_sub))
+    df_res$max_deg[g] <- max(degs_sub)
+    df_res$max_clos_node[g] <- names(which.max(clos_sub))
+    df_res$max_clos[g] <- max(clos_sub)
+    df_res$max_bets_node[g] <- names(which.max(bets_sub))
+    df_res$max_bets[g] <- max(bets_sub)
+    df_res$nodo_central_deg[g] = (degs[names(which.max(degs_sub))])
+    df_res$nodo_central_clos[g] = (clos[names(which.max(clos_sub))])
+    df_res$nodo_central_bets[g] = (bets[names(which.max(bets_sub))]) 
+    df_res$nodo_maximo_deg = max(degs)
+    df_res$nodo_maximo_clos = max(clos)
+    df_res$nodo_maximo_bets = max(bets)
+
+    
+
+}
+```
+
+
+```{r}
+df_res
+```
+
+
+<span style="color:blue">De la tabla se observa que los nodos que presentan los valores máximos en cada comunidad  son los nodos que tienen mucho peso en la comunidad en general</span>
+
+
+
+

@@ -1,0 +1,4 @@
+Archivos en Este ZIP:
+Configura_pyspark.py : Archivo de configuracion necesarion para importar la sesion de spark (" MySparkSession")
+Spark.-ML Home work.py : Archivo con el tratamiento de las variables y el modelo CV (tiene AUC=90% y tiempo= 290seg)
+homework Train.csv: Archivo de Datos

@@ -1,0 +1,468 @@
+---
+title: "Homework Multivariate"
+author: "Armando Olivares"
+date: "14 de diciembre de 2017"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+### Instructions:
+* Apply principal component analysis (PCA), Multidimensional Scaling (MDS), and factor analysis (FA) to a real data set
+* Add some descriptive analysis and make some inferences
+* The data set must be the same for PCA and for FA, but different for MDS (only distance/dissimilarity information)
+* Choose an application of your interest: macroeconomic variables, ﬁnance and banks, insurance companies, health care, research centers.
+* Use the internet to make your own survey and data collection (open data, APIs, etc).
+
+The Dataset selected is the **2016 County Health Rankings in the USA**, available at https://www.healthdata.gov/search/type/dataset  the description of this data is in a file named: _2016 County Health Rankings Data - v3.xls_ included in the folder named **data**
+
+
+Load the required packages:
+```{r}
+suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(plyr)))
+suppressWarnings(suppressMessages(library(dplyr)))
+suppressWarnings(suppressMessages(library(factoextra)))
+suppressWarnings(suppressMessages(library(cluster)))
+suppressWarnings(suppressMessages(library(mclust)))
+suppressWarnings(suppressMessages(library(DataExplorer)))
+suppressWarnings(suppressMessages(library(modeest)))
+```
+
+
+
+Read the Dataset:
+
+```{r}
+Dataset <- read.csv("data/2016CHR_CSV_Analytic_Data_v2.csv", header=T,  sep = ",")
+```
+
+#Exploratory  Data Analysis
+
+The size of de the datasetset
+```{r}
+dim(Dataset)
+
+```
+
+
+We have 3191 obs. of 362 varibles, let's see in more detail
+
+```{r}
+str(Dataset)
+```
+
+
+### Basic Statistics
+As we can seeThe data is 17.2 Mb in size. There are 3,191 rows and 362 columns (features). Of all 362 columns, 106 are discrete, 142 are continuous, and 114 are all missing. There are 406,918 missing values out of 1,155,142 data points.
+
+There is categorical and numerical variables, in order to succesful apply the PCA we need only numerical variables
+let's filter the dataset to keep only numerical ones.
+
+Let's filter and select our data:
+
+```{r}
+names<- Dataset$County
+Dataset <- Dataset[,sapply(Dataset, is.numeric)]
+dim(Dataset)
+```
+
+We keep only 142(the continuous vars) out of 362
+
+
+```{r}
+str(Dataset)
+```
+
+Let´s examine the Missing Values
+
+```{r}
+# Missing values
+hist(rowMeans(is.na(Dataset))) 
+
+```
+ 
+ Counting the NA's by columns
+ 
+
+```{r}
+sapply(Dataset, function(x) sum(is.na(x)))
+```
+
+The Column *County.that.was.not.ranked* has a lot of NA and this columns not adding to much informaction so we decide to delete it.
+
+```{r}
+Dataset$County.that.was.not.ranked <- NULL
+```
+
+Also in our dataset there are columns of interval, we don't care about these columns so we filter it
+
+
+```{r}
+Dataset <-select(Dataset, -contains("Confidence"))
+```
+
+We keep 70 variables from origin 362
+
+
+```{r}
+summary(Dataset)
+```
+
+We will examine the columns that contains NA's in order to decide what to do with them
+
+```{r}
+names(Dataset)
+```
+
+
+We only want certains columns that could be representative to our Study
+we will filter the meaninless columns like _COUNTYCODE, STATECODE and the Colummns names as Rank_
+```{r}
+Dataset_num <- Dataset[, -c(1,2,9,13,21,22,25,27,30,31,32,33,34, 43,44,48:70)]
+```
+
+The missing Values:
+```{r}
+ PlotMissing(Dataset_num)
+```
+
+
+
+```{r}
+sapply(Dataset_num, function(x) sum(is.na(x)))
+```
+
+
+To process the NA's we decide to impute to 0 the columns with only 1 NA, for example _Uninsured.adult.value_
+
+```{r}
+Dataset_num[,names(which(sapply(Dataset_num, function(x) sum(is.na(x))<5)))][is.na(Dataset_num[,names(which(sapply(Dataset_num, function(x) sum(is.na(x))<5)))])]<-0
+Dataset_num$Children.in.poverty.Value[is.na(Dataset_num$Children.in.poverty.Value)] <- 0
+Dataset_num$Infant.mortality.Value[is.na(Dataset_num$Infant.mortality.Value)] <- 0
+Dataset_num$Child.mortality.Value[is.na(Dataset_num$Child.mortality.Value)] <- 0
+Dataset_num$Injury.deaths.Value[is.na(Dataset_num$Injury.deaths.Value)] <- 0
+
+```
+
+Check again the columns
+```{r}
+sapply(Dataset_num, function(x) sum(is.na(x)))
+```
+
+
+
+Now  we will impute the remain NA's with the most comun value of the columns
+
+```{r}
+Dataset_num$Low.birthweight.Value[is.na(Dataset_num$Low.birthweight.Value)] <- mlv(as.numeric(Dataset_num$Low.birthweight.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Teen.births.Value[is.na(Dataset_num$Teen.births.Value)] <- mlv(as.numeric(Dataset_num$Teen.births.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Primary.care.physicians.Value[is.na(Dataset_num$Primary.care.physicians.Value)] <- mlv(as.numeric(Dataset_num$Primary.care.physicians.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Preventable.hospital.stays.Value[is.na(Dataset_num$Preventable.hospital.stays.Value)] <- mlv(as.numeric(Dataset_num$Preventable.hospital.stays.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Mammography.screening.Value[is.na(Dataset_num$Mammography.screening.Value)] <- mlv(as.numeric(Dataset_num$Mammography.screening.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Premature.age.adjusted.mortality.Value[is.na(Dataset_num$Premature.age.adjusted.mortality.Value)] <- mlv(as.numeric(Dataset_num$Premature.age.adjusted.mortality.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Air.pollution...particulate.matter.Value[is.na(Dataset_num$Air.pollution...particulate.matter.Value)] <- mean(as.numeric(Dataset_num$Air.pollution...particulate.matter.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Dentists.Value[is.na(Dataset_num$Dentists.Value)] <- mlv(as.numeric(Dataset_num$Dentists.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Diabetic.screening.Value[is.na(Dataset_num$Diabetic.screening.Value)] <- mlv(as.numeric(Dataset_num$Diabetic.screening.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Dentists.Value[is.na(Dataset_num$Dentists.Value)] <- mlv(as.numeric(Dataset_num$Dentists.Value), na.rm = T, method = "mfv")[1]
+Dataset_num$Access.to.exercise.opportunities.Value[is.na(Dataset_num$Access.to.exercise.opportunities.Value)] <- mlv(as.numeric(Dataset_num$Access.to.exercise.opportunities.Value), na.rm = T, method = "mfv")[1]
+
+
+
+```
+
+
+Now, to properly apply PCA the columns must have certain level of lineal correlation, so we will check the correlation through the heatmap:
+
+```{r}
+Dataset_num <- as.data.frame(sapply(Dataset_num, as.numeric))
+R = cor(Dataset_num) 
+heatmap(sqrt(2*(1-R)), symm = TRUE ) 
+
+```
+
+Another look of the correlation among variables:
+```{r}
+CorrelationContinuous(Dataset_num)
+```
+
+
+there is certain level of correlation as we see in the heatmap
+
+### Is time to apply the PCA Method:
+
+```{r}
+pca = prcomp(Dataset_num, scale=T)
+
+summary(pca)
+```
+
+The first and second component can explain about 49% of the variance of our dataset (no bad for having around 32 variables)
+
+
+
+
+### Now let's examine the components
+
+```{r}
+
+screeplot(pca,main="Screeplot",col="green4",type="barplot",pch=19)
+
+```
+
+as we hope the main component is the first one, it capture the most information
+
+In more details:
+
+```{r}
+barplot(-pca$rotation[,1], las=2, col="green4", cex.names = 0.7 )
+text(1,1,"test", srt=45) 
+
+```
+
+This component is capturing the information about health, % disease, % bad habits like smoking and obesity, also this component is capturing information about poverty 
+
+
+```{r}
+barplot(-pca$rotation[,2], las=2, col="green4", cex.names = 0.6)
+```
+
+
+
+This component seem to be capturing the info about insures in adult and children, this information is realtive to the social-economic factor, becauses a person that is not secure generally is poverty people (sadly)
+
+
+```{r}
+barplot(-pca$rotation[,3], las=2, col="green4", cex.names = 0.7)
+```
+
+This component is a little more difficult to interpret
+
+
+## Plotting the Components
+We will plotting the components to see graphically how the 2 principal component are clustering our data
+
+```{r}
+
+shares <- Dataset$COUNTYCODE
+color <- Dataset_num$Poor.physical.health.days.Value > 3.8
+qplot(pca$x[,1],pca$x[,2], label=names, col=color) + 
+  labs(title="PCA", x="PC1", y="PC2") +
+  theme_bw() + theme(legend.position="bottom") + geom_text(size=4, hjust=0, vjust=0, check_overlap = T)
+```
+
+```{r}
+qplot(pca$x[,1],pca$x[,2], label=1:nrow(Dataset), col=color) + 
+  labs(title="PCA", x="PC1", y="PC2") +
+  theme_bw() + theme(legend.position="bottom") + geom_text(size=4, hjust=0, vjust=0, check_overlap = T)
+```
+
+
+As we can see, The PCA had split our data in 2 clusterings, we believe that by county and its health condition, the county with better health conditions are in rigth and the worse are in the left.
+
+Let's check an example
+we select one point to the left and one point to the right and we will compare by each columns, by selecting the **Adair County** on the left and the **Slope County** on the right.
+This counties has the index 2166 and 2460 in our dataset(we selected this point from the graph), let's check it
+```{r}
+cbind(rbind(as.vector(names)[2166], as.vector(names)[2460]),rbind(Dataset_num[2166,], Dataset_num[2460,]))
+```
+We can see  how different this counties are, let's examine a few of them, the _**Adair County**_ has a greater average of people that reported physically unhealthy days per month, greater obesity and  smoking index, children in poverty, premature age died, we could say that this county is more unhealthy that the _**Sully County**_
+
+
+Checking the information about this 2 counties on wikipedia, we discover that the **Adair County(OK)** according the 2010 census: _The median income for a household in the county was $27,258, and the median income for a family was $32,930. Males had a median income of $28,370 versus $23,384 for females. The per capita income for the county was $13,560. About 25.3 percent of families and 27.8 percent of the population were below the poverty line_ whereas the **Sully County(SD):** _The median income for a household in the county was $48,958 and the median income for a family was $58,875. Males had a median income of $34,375 versus $29,087 for females. The per capita income for the county was $26,596. About 4.4% of families and 8.0% of the population were below the poverty line._
+
+**So our PCA is clustering the poorest and the richiest counties in a good manner, sadly as we can hope the poorest counties has the worse health indicators.**
+
+
+Finally the biplot
+```{r}
+biplot(pca)
+```
+
+
+We can see that there is individuals which  clearly groups most of the variables, that is what defines our clusters
+
+
+
+
+### Clustering with the kmeans methods
+```{r}
+X = scale(Dataset_num) 
+
+fit = kmeans(X, centers=2, nstart=100)
+groups = fit$cluster
+barplot(table(groups), col="green4")
+
+clusplot(X, fit$cluster,color=TRUE,shade=TRUE,lines=0)
+table(groups)
+```
+We have 2 cluster with 1255 obs and 1936 obs. respectely
+
+
+Now let's check if the point selected befores has clustering properly:
+```{r}
+groups[2166]
+groups[2460]
+```
+
+we note that this point are in diferent cluster like we saw before.
+So in cluster 1 we have the counties with better health conditions and in cluster 2 the worse ones.
+
+
+### Extracting Silhouette Information from Clustering
+
+```{r}
+
+d <- dist(X, method="euclidean")  
+sil = silhouette(groups,d)
+summary(sil)
+
+```
+
+
+
+
+```{r}
+fviz_nbclust(X, kmeans, method = 'wss')
+
+fviz_nbclust(X, kmeans, method = 'silhouette')
+```
+
+The graphic show us when k = 2, suggesting that's the optimal number of clusters, as we saw in PCA
+
+
+```{r}
+fviz_cluster(fit, data = X, geom = c("point"),ellipse.type = 'norm', pointsize=1)+
+  theme_minimal()+geom_text(label=names,hjust=0, vjust=0,size=2,check_overlap = T)+scale_fill_brewer(palette="Paired")
+
+```
+
+
+
+
+```{r}
+
+fit.km <- eclust(X, "kmeans", k = 2, nboot = 100)
+fviz_silhouette(fit.km, d)
+
+centers=fit.km$centers
+centers
+groups = fit.km$cluster
+fviz_cluster(fit.km, data = X, geom = c("point"),ellipse.type = 'norm', pointsize=1)+
+  theme_minimal()+geom_text(label=names,hjust=0, vjust=0,size=2,check_overlap = T)+scale_fill_brewer(palette="Paired")
+
+
+```
+
+#### Finally after analize and plot cluster with several methods we see that with 2 cluster and with around 47% of the information we can explain the data, resulting in that in USA, the poorest counties has the greater indicators of unhealthy, so this only confirm (even as a prejudice) that the poor people lives in worse conditions.
+
+
+
+## Factor Analysis
+
+If in PCA each component is orthogonal linear combinations of the variables to maximize the variance, in FA we have that factors are a linear combination of the underlying _latent_ variables to maximize the shared variance among the variables.
+
+
+First at we need to decide the optimum number of factor to extract, let's do it with the eigenvalues
+```{r}
+
+ev <- eigen(cor(Dataset_num)) # get eigenvalues
+plot(ev$values, xlab = ' Number', ylab = ' Size', main = 'Scree Graph', type = 'b', xaxt = 'n')
+axis(1, at = seq(1, 4, by = 1))
+```
+
+
+
+The grahp show us that 2,3 or 4 factors are required, but let's try with 2 factors.
+
+Lets Apply the Factor Analysis
+```{r}
+X <- Dataset_num
+x.f <- factanal(X, factors = 2, rotation="none", scores="regression", lower = 0.01)
+x.f
+cbind(x.f$loadings, x.f$uniquenesses)
+```
+
+
+The p value is low, in despite we can **reject** the hypothes that the 2-factor model does not fit the data perfectly and because this is an Exploratory Analysis: 2-factor model **allow us to explain** some of the data, 
+
+
+
+
+```{r}
+par(mfrow=c(2,1))
+barplot(x.f$loadings[,1], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+barplot(x.f$loadings[,2], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+
+pairs(x.f$loadings, panel = function(x,y) text(x,y, labels=names(X)))
+
+```
+
+
+
+There are 2 unobserved latent factors that underly the observed variables,  **Factor 1** is influenced by _Poor.or.fair.health.Value, Poor.physical.health.days.Value, Children.in.poverty.Value, Adult.smoking.Value, Adult.obesity.Value, Premature.age.adjusted.mortality.Value  _ so it seems that this factor concentrate the information of health habits; the **Factor 2** is influenced by _Uninsured.adults.Value, Uninsured.children.Value, Uninsured.Value,  Children.in.poverty.Value _ so mainly information socioeconomic.
+
+
+
+Let's examine a little more, we will apply the varimax rotation, to check if is there any differences:
+
+```{r}
+
+x.f <- factanal(X, factors = 2, rotation="varimax", scores="regression", lower = 0.01)
+x.f
+cbind(x.f$loadings, x.f$uniquenesses)
+
+
+par(mfrow=c(2,1))
+barplot(x.f$loadings[,1], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+barplot(x.f$loadings[,2], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+
+
+pairs(x.f$loadings, panel = function(x,y) text(x,y, labels=names(X)))
+
+
+qplot(x.f$loadings[,1], x.f$loadings[,2], label=names(X)) +
+  labs(title="First two loadings", x="L1", y="L2") +
+  geom_text(size=3, hjust=-.5, vjust=-.3)
+
+
+```
+
+Let's Explore promax rotation:
+
+```{r}
+
+x.f <- factanal(X, factors = 2, rotation="promax", scores="regression", lower = 0.01)
+x.f
+cbind(x.f$loadings, x.f$uniquenesses)
+
+par(mfrow=c(2,1))
+barplot(x.f$loadings[,1], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+barplot(x.f$loadings[,2], names=F, las=2, col="darkblue", ylim = c(-1, 1))
+
+
+pairs(x.f$loadings, panel = function(x,y) text(x,y, labels=names(X)))
+
+
+qplot(x.f$loadings[,1], x.f$loadings[,2], label=names(X)) +
+  labs(title="First two loadings", x="L1", y="L2") +
+  geom_text(size=3, hjust=-.5, vjust=-.3)
+
+
+```
+
+
+
+Again, we can see with both rotations **varimax** and **promax** we have that the factor 1 is influenced mainly by health variables and factor 2 is influenced by variables like _Uninsured_ that imply some socialeconomics considerations.
+Both of this factor represents and explains nearly 45% of the variance of the variables, is good enough to explain our data and discover pattern like what is inside each cluster, and why is this cluster created.
+
+
+
+
+### Summary
+
+PCA and FA are common methods of dimensionality reduction because both of them provides a way to reduce the dimension, The main differences in this methods are that while PCA is looking for lineal _real_ correlation among the variables, FA is looking for _latent_ patern in the data; In our case we apply both methods to a Dataset of health variables in the USA and this methods allow us to properly doing and Exploratory Data Analysis for this data and we could explain the cluster and associations among the variables.
+Finally to apply this method we should aware of its limitations.
+
+
