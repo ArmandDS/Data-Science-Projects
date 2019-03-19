@@ -7,31 +7,30 @@
 
 ## Table of Contents and Code Notebooks
 
-**Helpful installation and setup instructions can be found in the [README.md file of Chapter 1](code/ch01/README.md)**
+**Helpful Resources for Data Scientist Novels**
 
-To access the code materials for a given chapter, simply click on the `open dir` links next to the chapter headlines to navigate to the chapter subdirectories located in the [code/](code/) subdirectory. You can also click on the `ipynb` links below to open and view the Jupyter notebook of each chapter directly on GitHub.
+To access the code materials for a given chapter, simply click on the `open dir` links next to the chapter headlines to navigate to the chapter subdirectories located in the [code/](code/) subdirectory. You can also click on the `ipynb` or `R Code`  links below to open and view the Jupyter notebook, R Code, or Python  Code of each chapter directly on GitHub.
 
-In addition, the [code/](code/) subdirectories also contain .py script files, which were created from the Jupyter Notebooks. However, I highly recommend working with the Jupyter notebook if possible in your computing environment. Not only do the Jupyter notebooks contain the images and section headings for easier navigation, but they also allow for a stepwise execution of individual code snippets, which -- in my opinion -- provide a better learning experience.
 
 **Please note that these are just the code examples accompanying the book, which I uploaded for your convenience; be aware that these notebooks may not be useful without the formulae and descriptive text.**   
 
 
 1. Machine Learning - PCA and Clusteinr [[open dir](./Analisis_Multivariante/)] [[RMD](./Analisis_Multivariante/Armando_olivares_HomeworkMultivariate.Rmd)] 
-2. Training Machine Learning Algorithms for Classification [[open dir](./code/ch02)] [[ipynb](./code/ch02/ch02.ipynb)] 
-3. A Tour of Machine Learning Classifiers Using Scikit-Learn [[open dir](./code/ch03)] [[ipynb](./code/ch03/ch03.ipynb)] 
-4. Building Good Training Sets – Data Pre-Processing [[open dir](./code/ch04)] [[ipynb](./code/ch04/ch04.ipynb)] 
+2. Training Machine Learning Algorithms for Graphs Analyis [[open dir](./Análisis%20de%20Grafos)] [[RMD](./Análisis%20de%20Grafos/practica1)] 
+3. A Tour of Machine Learning for Clustering [[open dir](./Aprendizaje_no_supervisado_)] [[ipynb](./Aprendizaje_no_supervisado_/tarea.ipynb)] 
+4. Building Good Training Sets – Data Pre-Processing [[open dir](.Preprocesado%20de%20Datos)] [[ipynb](./Preprocesado%20de%20Datos/tarea_preprocesado.ipynb] 
 5. Compressing Data via Dimensionality Reduction [[open dir](./code/ch05)] [[ipynb](./code/ch05/ch05.ipynb)] 
 6. Learning Best Practices for Model Evaluation and Hyperparameter Optimization [[open dir](./code/ch06)] [[ipynb](./code/ch06/ch06.ipynb)]
-7. Combining Different Models for Ensemble Learning [[open dir](./code/ch07)] [[ipynb](./code/ch07/ch07.ipynb)]
-8. Applying Machine Learning to Sentiment Analysis [[open dir](./code/ch08)] [[ipynb](./code/ch08/ch08.ipynb)] 
-9. Embedding a Machine Learning Model into a Web Application [[open dir](./code/ch09)] [[ipynb](./code/ch09/ch09.ipynb)] 
-10. Predicting Continuous Target Variables with Regression Analysis [[open dir](./code/ch10)] [[ipynb](./code/ch10/ch10.ipynb)] 
-11. Working with Unlabeled Data – Clustering Analysis [[open dir](./code/ch11)] [[ipynb](./code/ch11/ch11.ipynb)] 
-12. Implementing a Multi-layer Artificial Neural Network from Scratch [[open dir](./code/ch12)] [[ipynb](./code/ch12/ch12.ipynb)] 
+7. Combining Different Models for Ensemble Learning for Fraud Detection [[open dir](./fraudDetection)] [[ipynb](./fraudDetection/fraudDetection_student.ipynb)]
+8. Applying RNN to Sentiment Analysis [[open dir](./Sentiment_analysis] [[ipynb](./Sentiment_analysis/sentiment.ipynb)] 
+9. Embedding a Machine Learning Model into a Web Application using Spotify API to Get the Data [[open dir](./open_data_Spotify/tarea_api)] [[py](./open_data_Spotify/tarea_api/Archivos_y_codigo)] 
+10. Predicting Housing Values with a Tour for Regression Analysis [[open dir](./Final_Homework%20_Regresion_avanzada/)] [[ipynb](./Final_Homework%20_Regresion_avanzada/FinalHomeworkRegression_ArmandoOlivares.ipynb)] 
+11. Working with Geolocation Data for Marketing [[open dir](./Geolocation)] [[Rcode](./Geolocation/Taller_2_Geomarketing.R)] 
+12. Time Series Analysis [[open dir](./Series%20Temporales_Accidentes%20Laborales)] [[RCode](./Series%20Temporales_Accidentes%20Laborales/Codigo_Series_temporales_AO.R)] 
 13. Parallelizing Neural Network Training with TensorFlow [[open dir](./code/ch13)] [[ipynb](./code/ch13/ch13.ipynb)] 
-14. Going Deeper: The Mechanics of TensorFlow [[open dir](./code/ch14)] [[ipynb](./code/ch14/ch14.ipynb)] 
-15. Classifying Images with Deep Convolutional Neural Networks [[open dir](./code/ch15)] [[ipynb](./code/ch15/ch15.ipynb)] 
-16. Modeling Sequential Data Using Recurrent Neural Networks [[open dir](./code/ch16)] [[ipynb](./code/ch16/ch16.ipynb)] 
+14. Implementing Deep Convolutional Neural Networks with Keras [[open dir](./lab3_indoorOutdoor_Deep_learning)] [[ipynb](./lab3_indoorOutdoor_Deep_learning/indoorOutdoor_student%20_Armando_olivares.ipynb)] 
+15. Recommender System [[open dir](./Sistema%20de%20Recomendacion)] [[ipynb](./Sistema%20de%20Recomendacion/SistemasDeRecomendacion.ipynb)] 
+16. Machine Learning with Spark [[open dir](./SparkML_)] [[Python Code](./SparkML_/Spark-ML%20Home%20work.py)] 
 
 
 --- 
