@@ -12,7 +12,7 @@
 To access the code materials for a given chapter, simply click on the `open dir` links next to the chapter headlines to navigate to the chapter subdirectories located in the [code/](code/) subdirectory. You can also click on the `ipynb` or `R Code`  links below to open and view the Jupyter notebook, R Code, or Python  Code of each chapter directly on GitHub.
 
 
-**Please note that these are just the code examples accompanying the book, which I uploaded for your convenience; be aware that these notebooks may not be useful without the formulae and descriptive text.**   
+**By Armando Olivares.**   
 
 
 1. Machine Learning - PCA and Clusteinr [[open dir](./Analisis_Multivariante/)] [[RMD](./Analisis_Multivariante/Armando_olivares_HomeworkMultivariate.Rmd)] 
