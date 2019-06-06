@@ -31,6 +31,7 @@ To access the code materials for a given chapter, simply click on the `open dir`
 14. Implementing Deep Convolutional Neural Networks with Keras [[open dir](./lab3_indoorOutdoor_Deep_learning)] [[ipynb](./lab3_indoorOutdoor_Deep_learning/indoorOutdoor_student%20_Armando_olivares.ipynb)] 
 15. Recommender System [[open dir](./Sistema%20de%20Recomendacion)] [[ipynb](./Sistema%20de%20Recomendacion/SistemasDeRecomendacion.ipynb)] 
 16. Machine Learning with Spark [[open dir](./SparkML_)] [[Python Code](./SparkML_/Spark-ML%20Home%20work.py)] 
+17. End to end Regression for a continous outcome [[open dir](https://github.com/ArmandDS/end_to_end_regression)] [[Python Code](https://github.com/ArmandDS/end_to_end_regression/blob/master/Report_regression.ipynb)] 
 
 
 --- 
