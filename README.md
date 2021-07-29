@@ -1,7 +1,7 @@
 ## Data Science Code Repository
 
 
-**Data Science and Machine Learning Code Repository**  
+**Data Science and Machine Learning Code Repository that I made in my Master in Data Science**  
 
 
 
