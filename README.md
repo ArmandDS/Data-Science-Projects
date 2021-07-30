@@ -7,7 +7,7 @@
 
 ## Table of Contents and Code Notebooks
 
-**Helpful Resources for Data Scientist Novels**
+**Helpful Resources for Novels Data Scientist **
 
 To access the code materials for a given chapter, simply click on the `open dir` links next to the chapter headlines to navigate to the chapter subdirectories located in the [code/](code/) subdirectory. You can also click on the `ipynb` or `R Code`  links below to open and view the Jupyter notebook, R Code, or Python  Code of each chapter directly on GitHub.
 
